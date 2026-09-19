@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Not Found | Indian Hotel Recommendation System</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<header class="navbar">
+    <div class="container nav-content">
+        <div class="brand">
+            <a href="/" class="nav-brand-link">
+                <h1 class="nav-title">Indian Hotel Recommendation System</h1>
+            </a>
+        </div>
+    </div>
+</header>
+<main class="container main-content">
+    <div class="state-container" style="margin-top: 60px;">
+        <div class="empty-icon" style="color: #ef4444;">
+            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+        </div>
+        <h2>Hotel Not Found</h2>
+        <p>{{ message or "The requested hotel could not be found in our recommendation database." }}</p>
+        <div style="margin-top: 24px;">
+            <a href="/" class="btn-primary" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
+                <span>Return to Homepage</span>
+            </a>
+        </div>
+    </div>
+</main>
+</body>
+</html>

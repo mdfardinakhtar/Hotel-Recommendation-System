@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ hotel.name }} | Hotel Details & Review Analysis</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="details-body">
+
+<!-- Navigation -->
+<header class="navbar">
+    <div class="container nav-content">
+        <div class="brand">
+            <div class="brand-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 21h18M3 7v14M21 7v14M6 11h2M6 15h2M10 11h2M10 15h2M14 11h2M14 15h2M18 11h2M18 15h2M9 3l3-2 3 2v4H9z"/>
+                </svg>
+            </div>
+            <div>
+                <a href="/" class="nav-brand-link">
+                    <h1 class="nav-title">Indian Hotel Recommendation System</h1>
+                </a>
+                <p class="nav-subtitle">Detailed Hotel Profile, Sentiment Insights & Aspect-Level Review Breakdown</p>
+            </div>
+        </div>
+        <a href="/" class="btn-secondary nav-back-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            <span>Back to Search</span>
+        </a>
+    </div>
+</header>
+
+<main class="container main-content details-container">
+
+    <!-- Breadcrumb -->
+    <nav class="breadcrumb">
+        <a href="/">Home</a>
+        <span>&rsaquo;</span>
+        <span class="current">{{ hotel.location }}</span>
+        <span>&rsaquo;</span>
+        <span class="current active">{{ hotel.name }}</span>
+    </nav>
+
+    <!-- Hotel Hero Card -->
+    <section class="hotel-hero-card">
+        <div class="hero-main-info">
+            <div class="hero-location-badge">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                </svg>
+                <span>{{ hotel.location }}</span>
+            </div>
+            <h1 class="hero-hotel-title">{{ hotel.name }}</h1>
+            <p class="hero-hotel-id">Hotel Reference ID: #{{ hotel.hotel_id }}</p>
+
+            <div class="hero-stats-row">
+                <!-- Star Rating -->
+                <div class="stat-badge stat-rating">
+                    <span class="stat-star">★</span>
+                    <span class="stat-value">{{ hotel.rating if hotel.rating is not none else "N/A" }}</span>
+                    <span class="stat-label">/ 5.0 (Bayesian Smoothed)</span>
+                </div>
+                <!-- Reviews count -->
+                <div class="stat-badge stat-reviews">
+                    <span class="stat-value">{{ hotel.review_count }}</span>
+                    <span class="stat-label">Verified Reviews</span>
+                </div>
+                <!-- Sentiment -->
+                <div class="stat-badge stat-sentiment">
+                    <span class="stat-value">{{ hotel.sentiment_rate if hotel.sentiment_rate is not none else "N/A" }}%</span>
+                    <span class="stat-label">Positive Sentiment</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="hero-pricing-box">
+            <div class="price-header">Average Rate</div>
+            <div class="price-main">
+                {% if hotel.price is not none %}
+                    <span class="currency">₹</span><span class="amount">{{ "{:,}".format(hotel.price) }}</span>
+                    <span class="period">/ night</span>
+                {% else %}
+                    <span class="amount">Price on Request</span>
+                {% endif %}
+            </div>
+
+            {% if hotel.original_price and hotel.original_price > hotel.price %}
+            <div class="price-comparison">
+                <span class="original-price">₹{{ "{:,}".format(hotel.original_price|round|int) }}</span>
+                {% if hotel.discount %}
+                <span class="discount-badge">{{ hotel.discount|round|int }}% OFF</span>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {% if rec_context.score %}
+            <div class="recommendation-badge-box">
+                <div class="rec-score-title">Recommendation Score</div>
+                <div class="rec-score-value">{{ rec_context.score }}%</div>
+                <div class="rec-score-sub">
+                    Match: {{ rec_context.aspect_match or 0 }}% &bull; Similarity: {{ rec_context.similarity or 0 }}%
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- Why Recommended Box -->
+    {% if why_reasons %}
+    <section class="section-card why-recommended-card">
+        <div class="card-title-row">
+            <div class="icon-circle icon-green">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+            </div>
+            <div>
+                <h3>Why This Hotel Was Recommended</h3>
+                <p>Derived strictly from actual customer reviews, price points, and NLP feature extractions.</p>
+            </div>
+        </div>
+        <ul class="why-list">
+            {% for reason in why_reasons %}
+            <li>
+                <span class="why-bullet">✓</span>
+                <span class="why-text">{{ reason }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+    </section>
+    {% endif %}
+
+    <!-- Visualizations Grid (Sentiment + Aspects) -->
+    <div class="visualizations-grid">
+        
+        <!-- Customer Sentiment Visualization -->
+        <section class="section-card sentiment-card">
+            <div class="card-title-row">
+                <div class="icon-circle icon-blue">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h3>Customer Sentiment Analysis</h3>
+                    <p>Machine Learning classification of review emotional tone</p>
+                </div>
+            </div>
+
+            <!-- ML Binary Sentiment (Positive vs Negative) -->
+            <div class="sentiment-block">
+                <div class="block-title">
+                    <span>ML Classifier Sentiment</span>
+                    <span class="block-caption">{{ sentiment_stats.ml_total }} classified reviews</span>
+                </div>
+
+                <div class="metric-row">
+                    <div class="metric-header">
+                        <span class="metric-name">Positive Sentiment</span>
+                        <span class="metric-val text-positive">{{ sentiment_stats.ml_pos_pct }}% ({{ sentiment_stats.ml_pos }} reviews)</span>
+                    </div>
+                    <div class="progress-track">
+                        <div class="progress-fill fill-positive" style="width: {{ sentiment_stats.ml_pos_pct }}%;"></div>
+                    </div>
+                </div>
+
+                <div class="metric-row">
+                    <div class="metric-header">
+                        <span class="metric-name">Negative Sentiment</span>
+                        <span class="metric-val text-negative">{{ sentiment_stats.ml_neg_pct }}% ({{ sentiment_stats.ml_neg }} reviews)</span>
+                    </div>
+                    <div class="progress-track">
+                        <div class="progress-fill fill-negative" style="width: {{ sentiment_stats.ml_neg_pct }}%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Raw User Sentiment Distribution -->
+            <div class="sentiment-block secondary-block">
+                <div class="block-title">
+                    <span>Customer Review Sentiment Distribution</span>
+                    <span class="block-caption">Direct guest ratings</span>
+                </div>
+                <div class="sentiment-pill-group">
+                    <div class="sentiment-pill pill-pos">
+                        <span class="pill-label">Positive</span>
+                        <span class="pill-pct">{{ sentiment_stats.user_pos_pct }}%</span>
+                        <span class="pill-cnt">({{ sentiment_stats.user_pos }})</span>
+                    </div>
+                    <div class="sentiment-pill pill-neu">
+                        <span class="pill-label">Neutral</span>
+                        <span class="pill-pct">{{ sentiment_stats.user_neu_pct }}%</span>
+                        <span class="pill-cnt">({{ sentiment_stats.user_neu }})</span>
+                    </div>
+                    <div class="sentiment-pill pill-neg">
+                        <span class="pill-label">Negative</span>
+                        <span class="pill-pct">{{ sentiment_stats.user_neg_pct }}%</span>
+                        <span class="pill-cnt">({{ sentiment_stats.user_neg }})</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sentiment-note">
+                <strong>ML Sentiment vs Hotel Rating:</strong> Hotel rating reflects guest numerical scores on a 1–5 scale, whereas ML sentiment analyzes textual feedback using natural language processing to isolate genuine praise from complaints.
+            </div>
+        </section>
+
+        <!-- Aspect-wise Customer Feedback -->
+        <section class="section-card aspect-card">
+            <div class="card-title-row">
+                <div class="icon-circle icon-purple">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="20" x2="18" y2="10"></line>
+                        <line x1="12" y1="20" x2="12" y2="4"></line>
+                        <line x1="6" y1="20" x2="6" y2="14"></line>
+                    </svg>
+                </div>
+                <div>
+                    <h3>Aspect-wise Customer Feedback</h3>
+                    <p>Positive feedback rate across 9 key hospitality aspects</p>
+                </div>
+            </div>
+
+            <div class="aspects-list">
+                {% for asp in aspect_scores %}
+                <div class="aspect-item">
+                    <div class="aspect-header">
+                        <span class="aspect-name">{{ asp.name }}</span>
+                        {% if asp.has_data and asp.score is not none %}
+                            <span class="aspect-score {% if asp.score >= 75 %}score-high{% elif asp.score >= 50 %}score-med{% else %}score-low{% endif %}">
+                                {{ asp.score }}% Positive
+                            </span>
+                        {% else %}
+                            <span class="aspect-score score-nodata">No specific mentions</span>
+                        {% endif %}
+                    </div>
+                    <div class="progress-track">
+                        {% if asp.has_data and asp.score is not none %}
+                            <div class="progress-fill {% if asp.score >= 75 %}fill-high{% elif asp.score >= 50 %}fill-med{% else %}fill-low{% endif %}"
+                                 style="width: {{ asp.score }}%;"></div>
+                        {% else %}
+                            <div class="progress-fill fill-nodata" style="width: 0%;"></div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+
+    <!-- Customer Reviews Section -->
+    <section class="section-card reviews-card" id="reviews-section">
+        <div class="reviews-header">
+            <div>
+                <h3>Verified Customer Reviews</h3>
+                <p>Read authentic experiences submitted by guests for {{ hotel.name }}</p>
+            </div>
+            
+            <!-- Sentiment Filter Buttons -->
+            <div class="review-filter-tabs">
+                <a href="/hotel/{{ hotel.hotel_id }}?sentiment=all{% if rec_context.score %}&score={{ rec_context.score }}&similarity={{ rec_context.similarity }}&aspect_match={{ rec_context.aspect_match }}&pref={{ rec_context.pref }}{% endif %}#reviews-section"
+                   class="tab-btn {% if sentiment_filter == 'all' %}active{% endif %}">
+                    All Reviews ({{ hotel.review_count }})
+                </a>
+                <a href="/hotel/{{ hotel.hotel_id }}?sentiment=positive{% if rec_context.score %}&score={{ rec_context.score }}&similarity={{ rec_context.similarity }}&aspect_match={{ rec_context.aspect_match }}&pref={{ rec_context.pref }}{% endif %}#reviews-section"
+                   class="tab-btn {% if sentiment_filter == 'positive' %}active{% endif %}">
+                    Positive Only ({{ sentiment_stats.ml_pos }})
+                </a>
+                <a href="/hotel/{{ hotel.hotel_id }}?sentiment=negative{% if rec_context.score %}&score={{ rec_context.score }}&similarity={{ rec_context.similarity }}&aspect_match={{ rec_context.aspect_match }}&pref={{ rec_context.pref }}{% endif %}#reviews-section"
+                   class="tab-btn {% if sentiment_filter == 'negative' %}active{% endif %}">
+                    Negative Only ({{ sentiment_stats.ml_neg }})
+                </a>
+            </div>
+        </div>
+
+        <!-- Review Cards List -->
+        <div class="reviews-list">
+            {% if reviews and reviews|length > 0 %}
+                {% for r in reviews %}
+                <div class="review-item">
+                    <div class="review-meta">
+                        <div class="reviewer-info">
+                            <div class="avatar-placeholder">{{ r.user_name[0]|upper if r.user_name else 'G' }}</div>
+                            <div>
+                                <span class="reviewer-name">{{ r.user_name }}</span>
+                                <span class="review-date">&bull; {{ r.date }}</span>
+                            </div>
+                        </div>
+                        <div class="review-badges">
+                            {% if r.rating is not none %}
+                            <span class="review-rating-tag">★ {{ r.rating|round|int }} / 5</span>
+                            {% endif %}
+                            <span class="ml-badge {% if r.ml_sentiment == 'POSITIVE' %}badge-pos{% else %}badge-neg{% endif %}">
+                                {{ r.ml_sentiment }}
+                                {% if r.confidence %}({{ r.confidence }}%){% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    <p class="review-text">{{ r.review_text }}</p>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-reviews-state">
+                    <p>No reviews found under the selected sentiment filter.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Pagination Controls -->
+        {% if total_pages > 1 %}
+        <div class="pagination-bar">
+            {% if page > 1 %}
+            <a href="/hotel/{{ hotel.hotel_id }}?page={{ page - 1 }}&sentiment={{ sentiment_filter }}{% if rec_context.score %}&score={{ rec_context.score }}&similarity={{ rec_context.similarity }}&aspect_match={{ rec_context.aspect_match }}&pref={{ rec_context.pref }}{% endif %}#reviews-section"
+               class="page-btn">
+               &larr; Previous Page
+            </a>
+            {% else %}
+            <span class="page-btn disabled">&larr; Previous Page</span>
+            {% endif %}
+
+            <span class="page-indicator">Page {{ page }} of {{ total_pages }} ({{ total_reviews_filtered }} reviews)</span>
+
+            {% if page < total_pages %}
+            <a href="/hotel/{{ hotel.hotel_id }}?page={{ page + 1 }}&sentiment={{ sentiment_filter }}{% if rec_context.score %}&score={{ rec_context.score }}&similarity={{ rec_context.similarity }}&aspect_match={{ rec_context.aspect_match }}&pref={{ rec_context.pref }}{% endif %}#reviews-section"
+               class="page-btn">
+               Next Page &rarr;
+            </a>
+            {% else %}
+            <span class="page-btn disabled">Next Page &rarr;</span>
+            {% endif %}
+        </div>
+        {% endif %}
+    </section>
+
+</main>
+
+<footer class="footer">
+    <div class="container footer-content">
+        <p>Indian Hotel Recommendation System &bull; Hotel Intelligence Profile for {{ hotel.name }}</p>
+        <p class="footer-sub">All analysis derived directly from verified customer feedback in the Indian Hotel dataset.</p>
+    </div>
+</footer>
+
+</body>
+</html>

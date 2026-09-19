@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Indian Hotel Recommendation System | NLP & Review Analytics</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <!-- Clean modern Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- Navigation / Header -->
+<header class="navbar">
+    <div class="container nav-content">
+        <div class="brand">
+            <div class="brand-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 21h18M3 7v14M21 7v14M6 11h2M6 15h2M10 11h2M10 15h2M14 11h2M14 15h2M18 11h2M18 15h2M9 3l3-2 3 2v4H9z"/>
+                </svg>
+            </div>
+            <div>
+                <h1 class="nav-title">Indian Hotel Recommendation System</h1>
+                <p class="nav-subtitle">Intelligent travel recommendations powered by customer reviews, aspect matching & ML sentiment analysis</p>
+            </div>
+        </div>
+        <div class="nav-badge">
+            <span>Machine Learning & NLP</span>
+        </div>
+    </div>
+</header>
+
+<!-- Main Content Area -->
+<main class="container main-content">
+    
+    <!-- Search / Filter Card -->
+    <section class="search-card">
+        <div class="card-header">
+            <h2>Find Your Ideal Hotel</h2>
+            <p>Specify your destination, budget, quality standards, and personalized travel preferences.</p>
+        </div>
+
+        <form id="recommendation-form" onsubmit="event.preventDefault(); getRecommendations();">
+            <div class="form-grid">
+                <!-- Location -->
+                <div class="form-group">
+                    <label for="location">Destination City</label>
+                    <div class="input-wrapper">
+                        <select id="location">
+                            <option value="">All India (Search Everywhere)</option>
+                            {% for loc in locations %}
+                            <option value="{{ loc.value }}">{{ loc.label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Budget -->
+                <div class="form-group">
+                    <label for="budget">Maximum Budget (₹ per night)</label>
+                    <div class="input-wrapper">
+                        <span class="input-prefix">₹</span>
+                        <input type="number" id="budget" placeholder="e.g. 2500" min="100" step="50">
+                    </div>
+                </div>
+
+                <!-- Minimum Rating -->
+                <div class="form-group">
+                    <label for="min_rating">Minimum Hotel Rating</label>
+                    <div class="input-wrapper">
+                        <select id="min_rating">
+                            <option value="">Any Rating</option>
+                            <option value="3.0">★ 3.0 & above</option>
+                            <option value="3.5">★ 3.5 & above</option>
+                            <option value="4.0" selected>★ 4.0 & above (Recommended)</option>
+                            <option value="4.5">★ 4.5 & above</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preference Selection Section -->
+            <div class="form-group preference-section">
+                <div class="preference-header-row">
+                    <label class="preference-label">What are you looking for?</label>
+                    <button type="button" id="clear-pref-btn" class="clear-all-btn hidden" onclick="clearAllPreferences()">
+                        Clear All
+                    </button>
+                </div>
+                <p class="preference-subtitle">Select one or more preferences:</p>
+
+                <!-- Selectable Preference Chips Grid -->
+                <div class="preference-chips-grid" id="preference-chips-container">
+                    <button type="button" class="pref-card" data-key="clean_room" onclick="togglePreference('clean_room')">
+                        <span class="pref-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
+                        <span class="pref-title">Clean Room</span>
+                    </button>
+                    <button type="button" class="pref-card" data-key="friendly_staff" onclick="togglePreference('friendly_staff')">
+                        <span class="pref-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
+                        <span class="pref-title">Friendly Staff</span>
+                    </button>
+                    <button type="button" class="pref-card" data-key="good_food" onclick="togglePreference('good_food')">
+                        <span class="pref-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
+                        <span class="pref-title">Good Food</span>
+                    </button>
+                    <button type="button" class="pref-card" data-key="comfortable_room" onclick="togglePreference('comfortable_room')">
+                        <span class="pref-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
+                        <span class="pref-title">Comfortable Room</span>
+                    </button>
+                    <button type="button" class="pref-card" data-key="good_cleanliness" onclick="togglePreference('good_cleanliness')">
+                        <span class="pref-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
+                        <span class="pref-title">Good Cleanliness</span>
+                    </button>
+                    <button type="button" class="pref-card" data-key="affordable" onclick="togglePreference('affordable')">
+                        <span class="pref-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
+                        <span class="pref-title">Affordable</span>
+                    </button>
+                    <button type="button" class="pref-card" data-key="good_location" onclick="togglePreference('good_location')">
+                        <span class="pref-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
+                        <span class="pref-title">Good Location</span>
+                    </button>
+                    <button type="button" class="pref-card" data-key="good_service" onclick="togglePreference('good_service')">
+                        <span class="pref-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
+                        <span class="pref-title">Good Service</span>
+                    </button>
+                    <button type="button" class="pref-card" data-key="family_friendly" onclick="togglePreference('family_friendly')">
+                        <span class="pref-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
+                        <span class="pref-title">Family Friendly</span>
+                    </button>
+                    <button type="button" class="pref-card" data-key="good_facilities" onclick="togglePreference('good_facilities')">
+                        <span class="pref-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
+                        <span class="pref-title">Good Facilities</span>
+                    </button>
+                </div>
+
+                <!-- Hidden input maintaining backwards compatibility with any existing form listeners -->
+                <input type="hidden" id="preference" value="">
+            </div>
+
+            <!-- Submit Button -->
+            <div class="form-actions">
+                <button type="submit" id="search-btn" class="btn-primary">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <span>Find Recommended Hotels</span>
+                </button>
+            </div>
+        </form>
+    </section>
+
+    <!-- Loading State -->
+    <div id="loading-state" class="state-container hidden">
+        <div class="spinner"></div>
+        <h3>Computing Recommendations</h3>
+        <p>Extracting aspect terms, computing TF-IDF similarity, and scoring customer review sentiments...</p>
+    </div>
+
+    <!-- Fallback / Relaxation Notice Banner -->
+    <div id="fallback-banner" class="alert-banner alert-warning hidden">
+        <div class="alert-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+        </div>
+        <div class="alert-body">
+            <h4 id="fallback-title">Filters Automatically Relaxed</h4>
+            <p id="fallback-message"></p>
+        </div>
+    </div>
+
+    <!-- Empty State -->
+    <div id="empty-state" class="state-container hidden">
+        <div class="empty-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M16 16s-1.5-2-4-2-4 2-4 2"></path>
+                <line x1="9" y1="9" x2="9.01" y2="9"></line>
+                <line x1="15" y1="9" x2="15.01" y2="9"></line>
+            </svg>
+        </div>
+        <h3>No hotels matched all your filters.</h3>
+        <p>Try increasing your budget, lowering the minimum rating, or removing one filter to explore more hotels.</p>
+    </div>
+
+    <!-- Error State -->
+    <div id="error-state" class="alert-banner alert-error hidden">
+        <div class="alert-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="15" y1="9" x2="9" y2="15"></line>
+                <line x1="9" y1="9" x2="15" y2="15"></line>
+            </svg>
+        </div>
+        <div class="alert-body">
+            <h4>Application Request Failed</h4>
+            <p id="error-message">Unable to connect to the Flask recommendation backend. Please make sure the server is running.</p>
+        </div>
+    </div>
+
+    <!-- Results Section -->
+    <section id="results-wrapper" class="results-wrapper hidden">
+        <!-- Results Bar (Summary + Sort Controls) -->
+        <div class="results-header-bar">
+            <div>
+                <h3 id="results-count-title">Recommended Hotels</h3>
+                <p id="detected-aspects-text" class="aspects-summary"></p>
+            </div>
+            <div class="sort-controls">
+                <label for="sort-by">Sort By:</label>
+                <select id="sort-by" onchange="handleSortChange()">
+                    <option value="recommended">Best Recommendation</option>
+                    <option value="rating">Highest Rated</option>
+                    <option value="price">Lowest Price</option>
+                    <option value="sentiment">Highest Sentiment</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Hotel Cards Grid -->
+        <div id="results-grid" class="cards-grid"></div>
+    </section>
+
+</main>
+
+<footer class="footer">
+    <div class="container footer-content">
+        <p>Indian Hotel Recommendation System &bull; Machine Learning, Aspect-Based NLP & Sentiment Analysis</p>
+        <p class="footer-sub">Uses real dataset of 192,015 Indian hotel customer reviews across 2,775 verified accommodations.</p>
+    </div>
+</footer>
+
+<script src="/static/script.js"></script>
+</body>
+</html>
