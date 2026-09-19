@@ -58,32 +58,46 @@ hotel_data = hotel_data.merge(price_meta, on="Hotel_ID", how="left")
 # --------------------------------------------------
 # Hotel Address In-Memory Lookup (Hotel_ID -> Address)
 # --------------------------------------------------
-def build_hotel_address_lookup(df):
+def build_hotel_display_and_address_lookup(df):
     """
-    Build in-memory lookup from Hotel_ID -> complete address.
+    Build in-memory lookup from Hotel_ID -> {
+        'name': pure hotel name only (without landmark/address appended),
+        'address': complete hotel address with landmark from dataset,
+        'city': human-readable city name
+    }
     Uses Hotel_ID as the primary key for matching hotel information.
-    Extracts verified locality/landmark from the raw dataset.
-    If not available in dataset, sets 'Address not available' without substituting city.
+    Separates hotel name and address into strictly separate fields:
+    - Hotel Name contains ONLY the hotel name.
+    - Hotel Address contains ONLY the address/landmark.
+    - City / Location is kept separate.
     """
-    address_map = {}
+    lookup = {}
+    pattern = r'^(.*?)\s*(?:,\s*)?\b(Near|Opposite|Opp\.?|Behind|Beside)\s+(.+)$'
     for _, row in df.iterrows():
         hid = int(row["Hotel_ID"])
-        name = str(row["Hotel_Name"])
-        loc = str(row["Location"])
+        raw_name = str(row["Hotel_Name"]).strip()
+        loc = str(row["Location"]).strip()
         city_display = "Delhi (Transit)" if loc == "Delhi_Transit" else loc.replace("_", " ")
 
-        # Look for landmark/address indicator within the hotel name string
-        # e.g., 'Near XYZ', 'Opposite XYZ', 'Opp. XYZ', 'Behind XYZ', 'Beside XYZ', 'At XYZ'
-        m = re.search(r'\b(Near|Opposite|Opp\.?|Behind|Beside|At)\s+([^,]+)', name, re.IGNORECASE)
+        # Separate landmark info from pure hotel name if present
+        m = re.search(pattern, raw_name, re.IGNORECASE)
         if m:
-            landmark = m.group(0).strip()
-            # Combine verified landmark with city
-            address_map[hid] = f"{landmark}, {city_display}"
+            pure_name = m.group(1).rstrip(', ').strip()
+            landmark = (m.group(2) + ' ' + m.group(3)).rstrip('.').strip()
+            address = f"{landmark}, {city_display}"
         else:
-            address_map[hid] = "Address not available"
-    return address_map
+            pure_name = raw_name.rstrip(',').strip()
+            address = "Address not available"
 
-HOTEL_ADDRESS_LOOKUP = build_hotel_address_lookup(hotel_data)
+        lookup[hid] = {
+            "name": pure_name,
+            "address": address,
+            "city": city_display
+        }
+    return lookup
+
+HOTEL_DISPLAY_LOOKUP = build_hotel_display_and_address_lookup(hotel_data)
+HOTEL_ADDRESS_LOOKUP = {hid: info["address"] for hid, info in HOTEL_DISPLAY_LOOKUP.items()}
 
 # --------------------------------------------------
 # Aspect Keywords & Exact Column Mappings
@@ -419,11 +433,18 @@ def recommend():
     hotels = []
     for _, row in result.iterrows():
         hid = int(row["Hotel_ID"])
+        display_info = HOTEL_DISPLAY_LOOKUP.get(hid, {
+            "name": str(row["Hotel_Name"]),
+            "address": "Address not available",
+            "city": str(row["Location"]).replace("_", " ")
+        })
         hotels.append({
             "hotel_id": hid,
-            "name": str(row["Hotel_Name"]),
+            "name": display_info["name"],
+            "raw_name": str(row["Hotel_Name"]),
             "location": str(row["Location"]),
-            "address": HOTEL_ADDRESS_LOOKUP.get(hid, "Address not available"),
+            "city": display_info["city"],
+            "address": display_info["address"],
             "price": None if pd.isna(row["Avg_Price"]) else round(float(row["Avg_Price"])),
             "original_price": None if pd.isna(row.get("Original_Price")) else round(float(row["Original_Price"])),
             "discount": None if pd.isna(row.get("Discount_Pct")) else round(float(row["Discount_Pct"])),
@@ -536,11 +557,18 @@ def hotel_details(hotel_id):
     }
 
     hid = int(row["Hotel_ID"])
+    display_info = HOTEL_DISPLAY_LOOKUP.get(hid, {
+        "name": str(row["Hotel_Name"]),
+        "address": "Address not available",
+        "city": str(row["Location"]).replace("_", " ")
+    })
     hotel_info = {
         "hotel_id": hid,
-        "name": str(row["Hotel_Name"]),
+        "name": display_info["name"],
+        "raw_name": str(row["Hotel_Name"]),
         "location": str(row["Location"]),
-        "address": HOTEL_ADDRESS_LOOKUP.get(hid, "Address not available"),
+        "city": display_info["city"],
+        "address": display_info["address"],
         "price": None if pd.isna(row["Avg_Price"]) else round(float(row["Avg_Price"])),
         "original_price": None if pd.isna(row.get("Original_Price")) else round(float(row["Original_Price"])),
         "discount": None if pd.isna(row.get("Discount_Pct")) else round(float(row["Discount_Pct"])),

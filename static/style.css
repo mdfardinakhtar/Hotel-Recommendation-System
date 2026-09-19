@@ -906,25 +906,26 @@ body {
 }
 
 .hotel-name {
-    font-size: 1.12rem;
+    font-size: 1.15rem;
     font-weight: 700;
     color: var(--neutral-900);
     line-height: 1.35;
+    margin: 0;
 }
 
 .hotel-address {
-    font-size: 0.84rem;
+    font-size: 0.85rem;
     color: var(--neutral-700);
     display: flex;
     align-items: flex-start;
     gap: 5px;
-    line-height: 1.4;
+    line-height: 1.42;
     word-break: break-word;
     margin-top: 2px;
 }
 
 .hotel-address .addr-pin {
-    font-size: 0.86rem;
+    font-size: 0.88rem;
     flex-shrink: 0;
     line-height: 1.3;
 }
@@ -947,13 +948,11 @@ body {
 }
 
 .hotel-location {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 0.82rem;
+    font-size: 0.84rem;
+    font-weight: 500;
     color: var(--neutral-500);
-    margin-top: 2px;
-    margin-bottom: 12px;
+    margin-top: 3px;
+    margin-bottom: 2px;
 }
 
 /* Pricing and Rating in Card */

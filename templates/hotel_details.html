@@ -43,7 +43,7 @@
     <nav class="breadcrumb">
         <a href="/">Home</a>
         <span>&rsaquo;</span>
-        <span class="current">{{ hotel.location }}</span>
+        <span class="current">{{ hotel.city or (hotel.location.replace('_', ' ') if hotel.location else '') }}</span>
         <span>&rsaquo;</span>
         <span class="current active">{{ hotel.name }}</span>
     </nav>
@@ -75,7 +75,7 @@
                     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                     <circle cx="12" cy="10" r="3"></circle>
                 </svg>
-                <span>{{ hotel.location }}</span>
+                <span>{{ hotel.city or (hotel.location.replace('_', ' ') if hotel.location else '') }}</span>
             </div>
             <p class="hero-hotel-id">Hotel Reference ID: #{{ hotel.hotel_id }}</p>
 

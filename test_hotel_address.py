@@ -39,6 +39,11 @@ def run_tests():
     assert h1["location"] == "Bangalore", "Expected location='Bangalore'"
     assert len(h1["address"]) > 0, "Address should not be empty"
 
+    # Verify pure hotel name and address separation
+    assert h1["name"] == "OYO Hotel Subha Residency", f"Expected pure name 'OYO Hotel Subha Residency', got '{h1['name']}'"
+    assert "Near Cubbon Park" not in h1["name"], "Landmark should not be in hotel name"
+    assert h1["address"] == "Near Cubbon Park, Bangalore", f"Expected 'Near Cubbon Park, Bangalore', got '{h1['address']}'"
+
     # 2. Test /recommend with Jaipur query
     resp_jpr = requests.post(f"{BASE_URL}/recommend", json={
         "location": "Jaipur",
@@ -58,6 +63,8 @@ def run_tests():
     print(f"  Score:    {h2['score']}%")
     assert "address" in h2
     assert h2["location"] == "Jaipur"
+    assert h2["name"] == "Super OYO Hotel Tourist Residency"
+    assert h2["address"] == "Address not available"
 
     # 3. Test /recommend with Delhi query
     resp_del = requests.post(f"{BASE_URL}/recommend", json={
@@ -118,20 +125,25 @@ def run_tests():
     print(f"  Score:    {h5['score']}%")
     assert "address" in h5
     assert h5["location"] == "Hyderabad"
+    assert h5["name"] == "Super OYO Capital O Hotel Sai Balaji"
+    assert "Near Golconda Fort" not in h5["name"], "Landmark should not be in hotel name"
+    assert h5["address"] == "Near Golconda Fort, Hyderabad"
 
-    # 6. Verify Hotel Details page (/hotel/<hotel_id>) shows exact same address
+    # 6. Verify Hotel Details page (/hotel/<hotel_id>) shows exact same address and pure title
     print("\n--- Testing Hotel Details Pages Consistency ---")
     for h in [h1, h2, h3, h4, h5]:
         det_resp = requests.get(f"{BASE_URL}/hotel/{h['hotel_id']}")
         assert det_resp.status_code == 200, f"Details page failed for hotel {h['hotel_id']}"
         html = det_resp.text
         assert 'class="hero-hotel-address"' in html, "hero-hotel-address missing in HTML"
+        # Check that pure name is in the title
+        assert f'<h1 class="hero-hotel-title">{h["name"]}</h1>' in html, f"Pure name '{h['name']}' not in hero-hotel-title"
         # Check that the address string appears in the HTML
         assert h['address'] in html, f"Address '{h['address']}' not found in details page for hotel #{h['hotel_id']}"
-        print(f"  [PASS] Hotel #{h['hotel_id']}: Address '{h['address']}' verified in details page")
+        print(f"  [PASS] Hotel #{h['hotel_id']}: Pure Name '{h['name']}' and Address '{h['address']}' verified in details page")
 
     print("\n==================================================")
-    print("ALL 5 HOTEL ADDRESS TESTS PASSED SUCCESSFULLY!")
+    print("ALL HOTEL NAME & ADDRESS SEPARATION TESTS PASSED!")
     print("==================================================")
 
 if __name__ == "__main__":
