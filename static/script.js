@@ -161,8 +161,14 @@ function handleCitySearchInput(query) {
         // If user query exactly matches a city, update hidden input
         const exactMatch = findCityMatch(rawQuery);
         const hiddenInput = document.getElementById("location");
-        if (exactMatch && hiddenInput) {
+        if (exactMatch && (exactMatch.label.toLowerCase() === qLower || exactMatch.value.toLowerCase() === qLower)) {
             hiddenInput.value = exactMatch.value;
+            selectedCityValue = exactMatch.value;
+        } else if (hiddenInput) {
+            if (selectedCityLabel && !selectedCityLabel.toLowerCase().includes(qLower)) {
+                hiddenInput.value = "";
+                selectedCityValue = "";
+            }
         }
     }
 

@@ -334,16 +334,18 @@ def home():
     raw_locations = sorted(
         reviews["Location"].dropna().astype(str).unique().tolist()
     )
-    # User-friendly display names (e.g. 'Delhi_Transit' -> 'Delhi (Transit)')
+    # User-friendly display names (e.g. 'Delhi_Transit' -> 'Delhi' and 'Delhi (Transit)')
     locations = []
     for loc in raw_locations:
         if loc == "Delhi_Transit":
-            label = "Delhi (Transit)"
+            locations.append({"value": "Delhi_Transit", "label": "Delhi"})
+            locations.append({"value": "Delhi_Transit", "label": "Delhi (Transit)"})
         elif "_" in loc:
             label = loc.replace("_", " ")
+            locations.append({"value": loc, "label": label})
         else:
             label = loc
-        locations.append({"value": loc, "label": label})
+            locations.append({"value": loc, "label": label})
 
     return render_template("index.html", locations=locations)
 
