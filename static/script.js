@@ -549,6 +549,42 @@ function toggleWhyAccordion(index) {
     }
 }
 
+function formatAddressForDisplay(address, city, location) {
+    if (!address || address === "Address not available") return address || "Address not available";
+    const cityVariants = [];
+    if (city) {
+        const cClean = String(city).trim();
+        if (cClean && !cityVariants.includes(cClean)) cityVariants.push(cClean);
+        if (cClean.includes(" (Transit)")) {
+            const sub = cClean.replace(" (Transit)", "").trim();
+            if (sub && !cityVariants.includes(sub)) cityVariants.push(sub);
+        }
+    }
+    if (location) {
+        const locStr = String(location).trim();
+        if (locStr && !cityVariants.includes(locStr)) cityVariants.push(locStr);
+        const locClean = locStr.replace(/_/g, " ").trim();
+        if (locClean && !cityVariants.includes(locClean)) cityVariants.push(locClean);
+        if (locStr === "Delhi_Transit" && !cityVariants.includes("Delhi")) cityVariants.push("Delhi");
+    }
+    cityVariants.sort((a, b) => b.length - a.length);
+
+    let formatted = address;
+    for (const v of cityVariants) {
+        if (!v) continue;
+        const esc = v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        formatted = formatted.replace(new RegExp(`,\\s*${esc}\\s*,`, 'gi'), ',');
+        formatted = formatted.replace(new RegExp(`,\\s*${esc}\\s*$`, 'gi'), '');
+        formatted = formatted.replace(new RegExp(`^\\s*${esc}\\s*,\\s*`, 'gi'), '');
+        formatted = formatted.replace(new RegExp(`\\s*\\(\\s*${esc}\\s*\\)`, 'gi'), '');
+    }
+    formatted = formatted.replace(/,\s*,+/g, ',');
+    formatted = formatted.replace(/,\s*/g, ', ');
+    formatted = formatted.replace(/^\s*,\s*/g, '');
+    formatted = formatted.replace(/\s*,\s*$/g, '').trim();
+    return formatted || "Address not available";
+}
+
 function renderHotelCards(hotels) {
     const container = document.getElementById("results-grid");
     container.innerHTML = "";
@@ -566,6 +602,7 @@ function renderHotelCards(hotels) {
         const aspectMatchText = `${hotel.aspect_match}% Aspect Match`;
         const similarityText = `${hotel.similarity}% Similarity`;
         const scoreText = `${hotel.score}%`;
+        const displayAddress = formatAddressForDisplay(hotel.address, hotel.city, hotel.location);
 
         // Reasons HTML list
         let reasonsHtml = "";
@@ -587,7 +624,7 @@ function renderHotelCards(hotels) {
                         <h3 class="hotel-name">${escapeHtml(hotel.name)}</h3>
                         <div class="hotel-address">
                             <span class="addr-pin">📍</span>
-                            <span class="addr-text">${escapeHtml(hotel.address || "Address not available")}</span>
+                            <span class="addr-text">${escapeHtml(displayAddress)}</span>
                         </div>
                         <div class="hotel-location">${escapeHtml(hotel.city || (hotel.location === 'Delhi_Transit' ? 'Delhi (Transit)' : hotel.location.replace(/_/g, ' ')))}</div>
                     </div>

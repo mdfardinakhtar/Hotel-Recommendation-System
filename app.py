@@ -58,17 +58,81 @@ hotel_data = hotel_data.merge(price_meta, on="Hotel_ID", how="left")
 # --------------------------------------------------
 # Hotel Address In-Memory Lookup (Hotel_ID -> Address)
 # --------------------------------------------------
+def format_address_for_display(address, city, location=None):
+    """
+    Format address for display by removing ONLY the duplicate city portion.
+    Preserves all building numbers, streets, localities, landmarks, states, and PIN codes.
+    If the city is not present as a separate component or is part of a landmark
+    (e.g., 'Near Chennai International Airport'), it is safely preserved.
+    """
+    if not address or address == "Address not available":
+        return address
+
+    city_variants = []
+    if city:
+        c_clean = str(city).strip()
+        if c_clean and c_clean not in city_variants:
+            city_variants.append(c_clean)
+        if " (Transit)" in c_clean:
+            sub = c_clean.replace(" (Transit)", "").strip()
+            if sub and sub not in city_variants:
+                city_variants.append(sub)
+    if location:
+        loc_str = str(location).strip()
+        if loc_str and loc_str not in city_variants:
+            city_variants.append(loc_str)
+        loc_clean = loc_str.replace("_", " ").strip()
+        if loc_clean and loc_clean not in city_variants:
+            city_variants.append(loc_clean)
+        if loc_str == "Delhi_Transit" and "Delhi" not in city_variants:
+            city_variants.append("Delhi")
+
+    # Sort variants longest first to avoid partial replacements
+    city_variants.sort(key=len, reverse=True)
+
+    formatted = address
+    for variant in city_variants:
+        if not variant:
+            continue
+        v_esc = re.escape(variant)
+
+        # 1. Comma-separated in middle: ', City,' or ', City ,' -> ','
+        pattern_middle = re.compile(r',\s*' + v_esc + r'\s*,', re.IGNORECASE)
+        formatted = pattern_middle.sub(',', formatted)
+
+        # 2. Comma-separated at end: ', City' -> ''
+        pattern_end = re.compile(r',\s*' + v_esc + r'\s*$', re.IGNORECASE)
+        formatted = pattern_end.sub('', formatted)
+
+        # 3. Comma-separated at start: '^City,' -> ''
+        pattern_start = re.compile(r'^\s*' + v_esc + r'\s*,\s*', re.IGNORECASE)
+        formatted = pattern_start.sub('', formatted)
+
+        # 4. Standalone in parentheses: '(City)' -> ''
+        pattern_paren = re.compile(r'\s*\(\s*' + v_esc + r'\s*\)', re.IGNORECASE)
+        formatted = pattern_paren.sub('', formatted)
+
+    # Clean up commas and spaces
+    formatted = re.sub(r',\s*,+', ',', formatted)
+    formatted = re.sub(r',\s*', ', ', formatted)
+    formatted = re.sub(r'^\s*,\s*', '', formatted)
+    formatted = re.sub(r'\s*,\s*$', '', formatted).strip()
+
+    return formatted if formatted else "Address not available"
+
+
 def build_hotel_display_and_address_lookup(df):
     """
     Build in-memory lookup from Hotel_ID -> {
         'name': pure hotel name only (without landmark/address appended),
-        'address': complete hotel address with landmark from dataset,
+        'raw_address': complete address including city/landmark,
+        'address': display address with duplicate city removed,
         'city': human-readable city name
     }
     Uses Hotel_ID as the primary key for matching hotel information.
     Separates hotel name and address into strictly separate fields:
     - Hotel Name contains ONLY the hotel name.
-    - Hotel Address contains ONLY the address/landmark.
+    - Hotel Address contains ONLY the address/landmark without duplicate city.
     - City / Location is kept separate.
     """
     lookup = {}
@@ -84,14 +148,17 @@ def build_hotel_display_and_address_lookup(df):
         if m:
             pure_name = m.group(1).rstrip(', ').strip()
             landmark = (m.group(2) + ' ' + m.group(3)).rstrip('.').strip()
-            address = f"{landmark}, {city_display}"
+            raw_address = f"{landmark}, {city_display}"
+            display_address = format_address_for_display(raw_address, city_display, loc)
         else:
             pure_name = raw_name.rstrip(',').strip()
-            address = "Address not available"
+            raw_address = "Address not available"
+            display_address = "Address not available"
 
         lookup[hid] = {
             "name": pure_name,
-            "address": address,
+            "raw_address": raw_address,
+            "address": display_address,
             "city": city_display
         }
     return lookup
@@ -445,6 +512,7 @@ def recommend():
             "location": str(row["Location"]),
             "city": display_info["city"],
             "address": display_info["address"],
+            "raw_address": display_info.get("raw_address", display_info["address"]),
             "price": None if pd.isna(row["Avg_Price"]) else round(float(row["Avg_Price"])),
             "original_price": None if pd.isna(row.get("Original_Price")) else round(float(row["Original_Price"])),
             "discount": None if pd.isna(row.get("Discount_Pct")) else round(float(row["Discount_Pct"])),
@@ -569,6 +637,7 @@ def hotel_details(hotel_id):
         "location": str(row["Location"]),
         "city": display_info["city"],
         "address": display_info["address"],
+        "raw_address": display_info.get("raw_address", display_info["address"]),
         "price": None if pd.isna(row["Avg_Price"]) else round(float(row["Avg_Price"])),
         "original_price": None if pd.isna(row.get("Original_Price")) else round(float(row["Original_Price"])),
         "discount": None if pd.isna(row.get("Discount_Pct")) else round(float(row["Discount_Pct"])),

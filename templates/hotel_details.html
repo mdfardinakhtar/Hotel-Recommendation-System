@@ -56,7 +56,7 @@
                 <span class="addr-pin">📍</span>
                 <span class="addr-text">{{ hotel.address }}</span>
                 {% if hotel.address and hotel.address != "Address not available" %}
-                <a href="https://www.google.com/maps/search/?api=1&query={{ (hotel.name + ', ' + hotel.address)|urlencode }}" 
+                <a href="https://www.google.com/maps/search/?api=1&query={{ (hotel.name + ', ' + (hotel.raw_address or hotel.address) + ', ' + (hotel.city or hotel.location))|urlencode }}" 
                    target="_blank" 
                    rel="noopener noreferrer" 
                    class="hero-map-btn" 
