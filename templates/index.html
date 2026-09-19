@@ -44,16 +44,50 @@
 
         <form id="recommendation-form" onsubmit="event.preventDefault(); getRecommendations();">
             <div class="form-grid">
-                <!-- Location -->
-                <div class="form-group">
-                    <label for="location">Destination City</label>
-                    <div class="input-wrapper">
-                        <select id="location">
-                            <option value="">All India (Search Everywhere)</option>
-                            {% for loc in locations %}
-                            <option value="{{ loc.value }}">{{ loc.label }}</option>
-                            {% endfor %}
-                        </select>
+                <!-- Searchable Destination City Dropdown -->
+                <div class="form-group city-autocomplete-group">
+                    <label for="city-search-input">Destination City</label>
+                    <div class="city-input-wrapper">
+                        <span class="city-search-icon">
+                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                <circle cx="12" cy="10" r="3"></circle>
+                            </svg>
+                        </span>
+                        <input 
+                            type="text" 
+                            id="city-search-input" 
+                            class="city-search-input" 
+                            placeholder="Search city... (e.g. Delhi, Bangalore, Mumbai)" 
+                            autocomplete="off"
+                            aria-label="Search destination city"
+                            onfocus="openCityDropdown()"
+                            oninput="handleCitySearchInput(this.value)"
+                            onkeydown="handleCityKeydown(event)"
+                        >
+                        <button 
+                            type="button" 
+                            id="clear-city-btn" 
+                            class="city-clear-btn hidden" 
+                            onclick="clearSelectedCity()"
+                            title="Clear destination city"
+                            aria-label="Clear destination city"
+                        >&times;</button>
+                        <span class="city-dropdown-arrow" onclick="toggleCityDropdown(event)">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </span>
+
+                        <!-- Hidden input storing selected dataset value for recommendation API -->
+                        <input type="hidden" id="location" name="location" value="">
+
+                        <!-- Dropdown Menu -->
+                        <div id="city-dropdown-menu" class="city-dropdown-menu hidden" role="listbox">
+                            <div class="city-dropdown-list" id="city-dropdown-list">
+                                <!-- Populated dynamically by script.js -->
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -235,6 +269,15 @@
     </div>
 </footer>
 
+<script>
+    // Server-rendered list of valid Indian locations from dataset
+    window.SERVER_LOCATIONS = [
+        {"value": "", "label": "All India (Search Everywhere)"},
+        {% for loc in locations %}
+        {"value": "{{ loc.value }}", "label": "{{ loc.label }}"}{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ];
+</script>
 <script src="/static/script.js"></script>
 </body>
 </html>

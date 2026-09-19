@@ -80,6 +80,310 @@ function applyQuickPref(text) {
     if (prefInput) prefInput.value = text;
 }
 
+// ==========================================================================
+// Destination City Searchable Autocomplete State & Controller
+// ==========================================================================
+let selectedCityValue = "";
+let selectedCityLabel = "";
+let filteredCities = [];
+let focusedCityIndex = -1;
+let isCityDropdownOpen = false;
+
+function initCityAutocomplete() {
+    filteredCities = Array.isArray(window.SERVER_LOCATIONS) ? [...window.SERVER_LOCATIONS] : [];
+    
+    // Check if hidden location input or search input already has a value
+    const hiddenInput = document.getElementById("location");
+    const searchInput = document.getElementById("city-search-input");
+    const clearBtn = document.getElementById("clear-city-btn");
+    
+    if (hiddenInput && hiddenInput.value) {
+        selectedCityValue = hiddenInput.value;
+        const match = findCityMatch(hiddenInput.value);
+        if (match) {
+            selectedCityLabel = match.label;
+            if (searchInput) searchInput.value = match.label;
+            if (clearBtn) clearBtn.classList.remove("hidden");
+        }
+    }
+    
+    renderCityDropdownList();
+
+    // Close dropdown when clicking anywhere outside the city autocomplete group
+    document.addEventListener("click", function(e) {
+        const group = document.querySelector(".city-autocomplete-group");
+        if (group && !group.contains(e.target)) {
+            closeCityDropdown();
+        }
+    });
+}
+
+function handleCitySearchInput(query) {
+    const rawQuery = (query || "").trim();
+    const qLower = rawQuery.toLowerCase();
+    const clearBtn = document.getElementById("clear-city-btn");
+    
+    // Toggle clear button based on text presence
+    if (clearBtn) {
+        if (rawQuery.length > 0) {
+            clearBtn.classList.remove("hidden");
+        } else {
+            clearBtn.classList.add("hidden");
+        }
+    }
+    
+    if (!qLower) {
+        filteredCities = Array.isArray(window.SERVER_LOCATIONS) ? [...window.SERVER_LOCATIONS] : [];
+        selectedCityValue = "";
+        selectedCityLabel = "";
+        const hiddenInput = document.getElementById("location");
+        if (hiddenInput) hiddenInput.value = "";
+    } else {
+        const allLocs = Array.isArray(window.SERVER_LOCATIONS) ? window.SERVER_LOCATIONS : [];
+        filteredCities = allLocs.filter(item => {
+            const label = (item.label || "").toLowerCase();
+            const val = (item.value || "").toLowerCase();
+            const normalizedVal = val.replace(/_/g, " ");
+
+            // Match if query is in label or dataset value
+            if (label.includes(qLower) || val.includes(qLower) || normalizedVal.includes(qLower)) {
+                return true;
+            }
+
+            // Delhi tolerance: 'del' / 'delhi' matches 'Delhi (Transit)'
+            if (qLower.startsWith("del") && (label.includes("delhi") || val.includes("delhi"))) {
+                return true;
+            }
+
+            return false;
+        });
+
+        // If user query exactly matches a city, update hidden input
+        const exactMatch = findCityMatch(rawQuery);
+        const hiddenInput = document.getElementById("location");
+        if (exactMatch && hiddenInput) {
+            hiddenInput.value = exactMatch.value;
+        }
+    }
+
+    focusedCityIndex = -1;
+    openCityDropdown();
+    renderCityDropdownList(rawQuery);
+}
+
+function renderCityDropdownList(query = "") {
+    const listContainer = document.getElementById("city-dropdown-list");
+    if (!listContainer) return;
+
+    if (!filteredCities || filteredCities.length === 0) {
+        listContainer.innerHTML = `<div class="city-no-match">No city found</div>`;
+        return;
+    }
+
+    const qLower = (query || "").trim().toLowerCase();
+
+    listContainer.innerHTML = filteredCities.map((item, idx) => {
+        const isSelected = item.value === selectedCityValue && selectedCityValue !== "";
+        const isFocused = idx === focusedCityIndex;
+        let classes = "city-option";
+        if (isSelected) classes += " selected";
+        if (isFocused) classes += " focused";
+
+        // Highlight matching query string in label
+        let displayHtml = escapeHtml(item.label);
+        if (qLower && item.label) {
+            const startIdx = item.label.toLowerCase().indexOf(qLower);
+            if (startIdx >= 0) {
+                const before = escapeHtml(item.label.substring(0, startIdx));
+                const matchText = escapeHtml(item.label.substring(startIdx, startIdx + qLower.length));
+                const after = escapeHtml(item.label.substring(startIdx + qLower.length));
+                displayHtml = `${before}<span class="city-option-highlight">${matchText}</span>${after}`;
+            }
+        }
+
+        const checkMark = isSelected ? `<span class="city-option-check">✓</span>` : "";
+
+        return `
+            <div class="${classes}" 
+                 role="option" 
+                 aria-selected="${isSelected}"
+                 data-index="${idx}"
+                 onclick="selectCity('${escapeAttr(item.value)}', '${escapeAttr(item.label)}')">
+                <span>${displayHtml}</span>
+                ${checkMark}
+            </div>
+        `;
+    }).join("");
+}
+
+function selectCity(value, label) {
+    selectedCityValue = value;
+    selectedCityLabel = label;
+
+    const hiddenInput = document.getElementById("location");
+    const searchInput = document.getElementById("city-search-input");
+    const clearBtn = document.getElementById("clear-city-btn");
+
+    if (hiddenInput) hiddenInput.value = value;
+    if (searchInput) {
+        searchInput.value = label;
+    }
+    if (clearBtn) {
+        if (value || (label && label !== "All India (Search Everywhere)")) {
+            clearBtn.classList.remove("hidden");
+        } else {
+            clearBtn.classList.add("hidden");
+        }
+    }
+
+    closeCityDropdown();
+}
+
+function clearSelectedCity() {
+    selectedCityValue = "";
+    selectedCityLabel = "";
+    const hiddenInput = document.getElementById("location");
+    const searchInput = document.getElementById("city-search-input");
+    const clearBtn = document.getElementById("clear-city-btn");
+
+    if (hiddenInput) hiddenInput.value = "";
+    if (searchInput) {
+        searchInput.value = "";
+        searchInput.focus();
+    }
+    if (clearBtn) clearBtn.classList.add("hidden");
+
+    filteredCities = Array.isArray(window.SERVER_LOCATIONS) ? [...window.SERVER_LOCATIONS] : [];
+    focusedCityIndex = -1;
+    renderCityDropdownList("");
+    openCityDropdown();
+}
+
+function openCityDropdown() {
+    const menu = document.getElementById("city-dropdown-menu");
+    const wrapper = document.querySelector(".city-input-wrapper");
+    if (menu) menu.classList.remove("hidden");
+    if (wrapper) wrapper.classList.add("open");
+    isCityDropdownOpen = true;
+
+    if (!filteredCities || filteredCities.length === 0) {
+        filteredCities = Array.isArray(window.SERVER_LOCATIONS) ? [...window.SERVER_LOCATIONS] : [];
+        renderCityDropdownList(document.getElementById("city-search-input")?.value || "");
+    }
+}
+
+function closeCityDropdown() {
+    const menu = document.getElementById("city-dropdown-menu");
+    const wrapper = document.querySelector(".city-input-wrapper");
+    if (menu) menu.classList.add("hidden");
+    if (wrapper) wrapper.classList.remove("open");
+    isCityDropdownOpen = false;
+    focusedCityIndex = -1;
+}
+
+function toggleCityDropdown(event) {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+    if (isCityDropdownOpen) {
+        closeCityDropdown();
+    } else {
+        const input = document.getElementById("city-search-input");
+        if (input) input.focus();
+        openCityDropdown();
+    }
+}
+
+function handleCityKeydown(e) {
+    if (!isCityDropdownOpen) {
+        if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+            openCityDropdown();
+            e.preventDefault();
+            return;
+        }
+    }
+
+    if (e.key === "ArrowDown") {
+        e.preventDefault();
+        if (filteredCities.length === 0) return;
+        focusedCityIndex = Math.min(focusedCityIndex + 1, filteredCities.length - 1);
+        renderCityDropdownList(document.getElementById("city-search-input")?.value || "");
+        scrollFocusedCityIntoView();
+    } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        if (filteredCities.length === 0) return;
+        focusedCityIndex = Math.max(focusedCityIndex - 1, 0);
+        renderCityDropdownList(document.getElementById("city-search-input")?.value || "");
+        scrollFocusedCityIntoView();
+    } else if (e.key === "Enter") {
+        if (isCityDropdownOpen) {
+            if (focusedCityIndex >= 0 && focusedCityIndex < filteredCities.length) {
+                e.preventDefault();
+                const target = filteredCities[focusedCityIndex];
+                selectCity(target.value, target.label);
+            } else if (filteredCities.length === 1) {
+                e.preventDefault();
+                const target = filteredCities[0];
+                selectCity(target.value, target.label);
+            } else {
+                closeCityDropdown();
+            }
+        }
+    } else if (e.key === "Escape") {
+        closeCityDropdown();
+        e.preventDefault();
+    } else if (e.key === "Tab") {
+        closeCityDropdown();
+    }
+}
+
+function scrollFocusedCityIntoView() {
+    const focusedEl = document.querySelector(".city-option.focused");
+    if (focusedEl) {
+        focusedEl.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    }
+}
+
+function findCityMatch(str) {
+    if (!str || !window.SERVER_LOCATIONS) return null;
+    const q = str.trim().toLowerCase();
+    const locs = window.SERVER_LOCATIONS;
+
+    // 1. Exact value match
+    let match = locs.find(loc => loc.value && loc.value.toLowerCase() === q);
+    if (match) return match;
+
+    // 2. Exact label match
+    match = locs.find(loc => loc.label && loc.label.toLowerCase() === q);
+    if (match) return match;
+
+    // 3. Delhi variations
+    if (q === "delhi" || q === "new delhi" || q === "delhi transit" || q === "delhi (transit)") {
+        match = locs.find(loc => loc.value === "Delhi_Transit");
+        if (match) return match;
+    }
+
+    // 4. Starts-with match
+    match = locs.find(loc => loc.label && loc.label.toLowerCase().startsWith(q));
+    if (match) return match;
+
+    // 5. Value starts-with
+    match = locs.find(loc => loc.value && loc.value.toLowerCase().startsWith(q));
+    if (match) return match;
+
+    // 6. Substring contains
+    match = locs.find(loc => loc.label && loc.label.toLowerCase().includes(q));
+    if (match) return match;
+
+    return null;
+}
+
+function escapeAttr(str) {
+    if (!str) return "";
+    return String(str).replace(/'/g, "\\'").replace(/"/g, "&quot;");
+}
+
 async function getRecommendations() {
     const searchBtn = document.getElementById("search-btn");
     const loadingState = document.getElementById("loading-state");
@@ -95,7 +399,18 @@ async function getRecommendations() {
     const sortBySelect = document.getElementById("sort-by");
 
     // Gather form input values
-    const location = document.getElementById("location").value;
+    let location = document.getElementById("location") ? document.getElementById("location").value.trim() : "";
+    const searchInput = document.getElementById("city-search-input");
+    if (!location && searchInput && searchInput.value.trim()) {
+        const textVal = searchInput.value.trim();
+        const match = findCityMatch(textVal);
+        if (match) {
+            location = match.value;
+            if (document.getElementById("location")) document.getElementById("location").value = match.value;
+        } else {
+            location = textVal;
+        }
+    }
     const budget = document.getElementById("budget").value;
     const minRating = document.getElementById("min_rating").value;
 
@@ -321,4 +636,11 @@ function escapeHtml(str) {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
+}
+
+// Initialize city autocomplete component when DOM is loaded
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initCityAutocomplete);
+} else {
+    initCityAutocomplete();
 }
