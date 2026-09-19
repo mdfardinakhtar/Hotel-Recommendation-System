@@ -25,94 +25,6 @@ const PREFERENCE_MAP = {
 // Set tracking active selected preference keys
 const selectedPreferences = new Set();
 
-function filterPreferenceOptions(query) {
-    const rawQuery = (query || "").trim().toLowerCase();
-    const clearBtn = document.getElementById("clear-search-btn");
-    const container = document.getElementById("preference-chips-container");
-    const noMatchesBox = document.getElementById("no-pref-matches");
-    const noMatchesQuery = document.getElementById("no-pref-query");
-    const optionsCaption = document.getElementById("pref-options-caption");
-
-    if (clearBtn) {
-        if (rawQuery.length > 0) {
-            clearBtn.classList.remove("hidden");
-        } else {
-            clearBtn.classList.add("hidden");
-        }
-    }
-
-    const cards = container ? container.querySelectorAll(".pref-card") : [];
-    let visibleCount = 0;
-
-    cards.forEach(card => {
-        const title = (card.getAttribute("data-title") || card.textContent || "").toLowerCase();
-        const key = (card.getAttribute("data-key") || "").toLowerCase().replace("_", " ");
-        
-        // Match query against title or key
-        const matches = rawQuery === "" || title.includes(rawQuery) || key.includes(rawQuery);
-
-        if (matches) {
-            card.classList.remove("hidden");
-            visibleCount++;
-        } else {
-            card.classList.add("hidden");
-        }
-    });
-
-    if (noMatchesBox) {
-        if (visibleCount === 0 && rawQuery.length > 0) {
-            noMatchesBox.classList.remove("hidden");
-            if (noMatchesQuery) noMatchesQuery.textContent = rawQuery;
-            if (optionsCaption) optionsCaption.classList.add("hidden");
-        } else {
-            noMatchesBox.classList.add("hidden");
-            if (optionsCaption) optionsCaption.classList.remove("hidden");
-        }
-    }
-}
-
-function clearSearchInput() {
-    const input = document.getElementById("pref-search-input");
-    if (input) {
-        input.value = "";
-        filterPreferenceOptions("");
-        input.focus();
-    }
-}
-
-function renderSelectedSummary() {
-    const summaryContainer = document.getElementById("selected-summary-container");
-    const chipsList = document.getElementById("selected-chips-list");
-    const clearAllBtn = document.getElementById("clear-pref-btn");
-
-    if (!summaryContainer || !chipsList) return;
-
-    if (selectedPreferences.size === 0) {
-        summaryContainer.classList.add("hidden");
-        chipsList.innerHTML = "";
-        if (clearAllBtn) clearAllBtn.classList.add("hidden");
-        return;
-    }
-
-    summaryContainer.classList.remove("hidden");
-    if (clearAllBtn) clearAllBtn.classList.remove("hidden");
-
-    chipsList.innerHTML = "";
-    selectedPreferences.forEach(key => {
-        const item = PREFERENCE_MAP[key];
-        if (!item) return;
-
-        const pill = document.createElement("span");
-        pill.className = "selected-pill";
-        pill.innerHTML = `
-            <span class="selected-pill-check">✓</span>
-            <span class="selected-pill-title">${escapeHtml(item.label)}</span>
-            <button type="button" class="selected-pill-remove" onclick="togglePreference('${key}')" title="Remove ${escapeHtml(item.label)}" aria-label="Remove ${escapeHtml(item.label)}">&times;</button>
-        `;
-        chipsList.appendChild(pill);
-    });
-}
-
 function togglePreference(key) {
     if (!PREFERENCE_MAP[key]) return;
 
@@ -126,18 +38,25 @@ function togglePreference(key) {
         if (btn) btn.classList.add("selected");
     }
 
-    renderSelectedSummary();
-    updatePreferenceInput();
+    updatePreferenceState();
 }
 
 function clearAllPreferences() {
     selectedPreferences.clear();
     document.querySelectorAll(".pref-card").forEach(btn => btn.classList.remove("selected"));
-    renderSelectedSummary();
-    updatePreferenceInput();
+    updatePreferenceState();
 }
 
-function updatePreferenceInput() {
+function updatePreferenceState() {
+    const clearBtn = document.getElementById("clear-pref-btn");
+    if (clearBtn) {
+        if (selectedPreferences.size > 0) {
+            clearBtn.classList.remove("hidden");
+        } else {
+            clearBtn.classList.add("hidden");
+        }
+    }
+
     const prefInput = document.getElementById("preference");
     if (prefInput) {
         if (selectedPreferences.size > 0) {
