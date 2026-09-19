@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Bookings | Indian Hotel Recommendation System</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="details-body">
+
+<!-- Navigation -->
+<header class="navbar">
+    <div class="container nav-content">
+        <div class="brand">
+            <div class="brand-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 21h18M3 7v14M21 7v14M6 11h2M6 15h2M10 11h2M10 15h2M14 11h2M14 15h2M18 11h2M18 15h2M9 3l3-2 3 2v4H9z"/>
+                </svg>
+            </div>
+            <div>
+                <a href="/" class="nav-brand-link">
+                    <h1 class="nav-title">Indian Hotel Recommendation System</h1>
+                </a>
+                <p class="nav-subtitle">Verified Hotel Discovery & Reservation Workflow</p>
+            </div>
+        </div>
+        <div class="nav-actions">
+            <a href="/" class="btn-secondary nav-back-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+                <span>Search Hotels</span>
+            </a>
+        </div>
+    </div>
+</header>
+
+<main class="container main-content my-bookings-container">
+
+    <div class="page-title-banner">
+        <h2>Manage Your Hotel Bookings</h2>
+        <p>Look up your reservation details, view itineraries, download vouchers, or cancel reservations anytime.</p>
+    </div>
+
+    <!-- Search Form -->
+    <div class="lookup-card">
+        <form action="/my-bookings" method="GET" class="lookup-form">
+            <div class="lookup-input-group">
+                <label for="booking_id_input">Enter Booking Reference ID</label>
+                <div class="lookup-field-wrapper">
+                    <span class="field-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                    </span>
+                    <input 
+                        type="text" 
+                        id="booking_id_input" 
+                        name="booking_id" 
+                        value="{{ query }}" 
+                        placeholder="e.g. BK202609200001" 
+                        class="lookup-input" 
+                        required
+                        autofocus
+                    >
+                    <button type="submit" class="btn-primary lookup-submit-btn">
+                        <span>Find Reservation</span>
+                    </button>
+                </div>
+                <span class="lookup-hint">Your booking ID was provided on the confirmation screen upon reserving.</span>
+            </div>
+        </form>
+    </div>
+
+    <!-- Search Results Area -->
+    {% if searched %}
+        {% if booking %}
+            <div class="booking-result-card">
+                <div class="result-header">
+                    <div>
+                        <span class="result-id-label">Booking ID:</span>
+                        <span class="result-id-val">{{ booking.booking_id }}</span>
+                    </div>
+                    <span class="status-pill {{ 'pill-confirmed' if booking.booking_status == 'Confirmed' else 'pill-cancelled' }}">
+                        {{ booking.booking_status }}
+                    </span>
+                </div>
+
+                <div class="result-body">
+                    <div class="result-hotel-info">
+                        <h3 class="result-hotel-name">{{ booking.hotel_name }}</h3>
+                        <div class="hotel-address">
+                            <span class="addr-pin">📍</span>
+                            <span class="addr-text">{{ booking.hotel_address }}</span>
+                        </div>
+                        <div class="hotel-location">{{ booking.city }}</div>
+                    </div>
+
+                    <div class="result-meta-grid">
+                        <div class="result-meta-item">
+                            <span class="meta-label">Guest</span>
+                            <span class="meta-val font-semibold">{{ booking.guest_name }}</span>
+                        </div>
+                        <div class="result-meta-item">
+                            <span class="meta-label">Dates</span>
+                            <span class="meta-val">{{ booking.check_in }} &rarr; {{ booking.check_out }} ({{ booking.nights }}N)</span>
+                        </div>
+                        <div class="result-meta-item">
+                            <span class="meta-label">Rooms & Guests</span>
+                            <span class="meta-val">{{ booking.rooms }} Room{{ 's' if booking.rooms > 1 else '' }}, {{ booking.guests }} Guest{{ 's' if booking.guests > 1 else '' }}</span>
+                        </div>
+                        <div class="result-meta-item">
+                            <span class="meta-label">Total Amount</span>
+                            <span class="meta-val price-highlight">₹{{ "{:,.2f}".format(booking.total_amount) }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="result-footer">
+                    <a href="/booking/confirmation/{{ booking.booking_id }}" class="btn-primary">
+                        <span>View Full Confirmation & Voucher &rarr;</span>
+                    </a>
+                    {% if booking.booking_status == 'Confirmed' %}
+                    <form action="/booking/cancel/{{ booking.booking_id }}" method="POST" onsubmit="return confirm('Are you sure you want to cancel booking {{ booking.booking_id }}?');">
+                        <button type="submit" class="btn-secondary btn-cancel-compact">
+                            <span>Cancel Reservation</span>
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        {% else %}
+            <div class="not-found-card">
+                <div class="not-found-icon">🔍</div>
+                <h3>No Reservation Found</h3>
+                <p>We could not find any booking matching reference <strong>"{{ query }}"</strong>.</p>
+                <p class="sub-tip">Please check for any typos or ensure you are using the full booking code (e.g. <code>BK202609200001</code>).</p>
+                <a href="/" class="btn-secondary" style="margin-top: 1rem;">Back to Hotel Search</a>
+            </div>
+        {% endif %}
+    {% else %}
+        <!-- Helpful Information Placeholder -->
+        <div class="lookup-info-card">
+            <div class="info-item">
+                <div class="info-icon">⚡</div>
+                <div class="info-text">
+                    <h4>Instant Lookup</h4>
+                    <p>Enter your unique booking ID to instantly retrieve stay details and receipts.</p>
+                </div>
+            </div>
+            <div class="info-item">
+                <div class="info-icon">🔄</div>
+                <div class="info-text">
+                    <h4>Easy Cancellation</h4>
+                    <p>Free cancellations directly from your confirmation or reservation lookup dashboard.</p>
+                </div>
+            </div>
+            <div class="info-item">
+                <div class="info-icon">🛡️</div>
+                <div class="info-text">
+                    <h4>Secure Storage</h4>
+                    <p>All bookings are safely stored in your application database with authoritative server verification.</p>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+</main>
+
+<footer class="footer">
+    <div class="container footer-content">
+        <p>Indian Hotel Recommendation & Booking System &bull; Machine Learning & NLP Driven</p>
+        <p class="footer-sub">Persistent SQLite Booking Store &bull; Exact Dataset Address Integration</p>
+    </div>
+</footer>
+
+</body>
+</html>

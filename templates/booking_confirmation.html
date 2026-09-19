@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Confirmation | {{ booking.booking_id }}</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="details-body">
+
+<!-- Navigation -->
+<header class="navbar">
+    <div class="container nav-content">
+        <div class="brand">
+            <div class="brand-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 21h18M3 7v14M21 7v14M6 11h2M6 15h2M10 11h2M10 15h2M14 11h2M14 15h2M18 11h2M18 15h2M9 3l3-2 3 2v4H9z"/>
+                </svg>
+            </div>
+            <div>
+                <a href="/" class="nav-brand-link">
+                    <h1 class="nav-title">Indian Hotel Recommendation System</h1>
+                </a>
+                <p class="nav-subtitle">Verified Hotel Discovery & Reservation Workflow</p>
+            </div>
+        </div>
+        <div class="nav-actions">
+            <a href="/my-bookings" class="nav-link-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10 9 9 9 8 9"></polyline>
+                </svg>
+                <span>My Bookings</span>
+            </a>
+            <a href="/" class="btn-secondary nav-back-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+                <span>Search Hotels</span>
+            </a>
+        </div>
+    </div>
+</header>
+
+<main class="container main-content booking-confirmation-container">
+
+    <!-- Flash message support -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, msg in messages %}
+                <div class="alert alert-{{ 'success' if category == 'success' else ('error' if category == 'error' else 'info') }}">
+                    <span class="alert-icon">{{ '✅' if category == 'success' else ('⚠️' if category == 'error' else 'ℹ️') }}</span>
+                    <span class="alert-msg">{{ msg }}</span>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="confirmation-card">
+        <!-- Status Hero Banner -->
+        <div class="confirmation-header {{ 'status-confirmed' if booking.booking_status == 'Confirmed' else 'status-cancelled' }}">
+            <div class="confirmation-status-icon">
+                {% if booking.booking_status == 'Confirmed' %}
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+                {% else %}
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="15" y1="9" x2="9" y2="15"></line>
+                    <line x1="9" y1="9" x2="15" y2="15"></line>
+                </svg>
+                {% endif %}
+            </div>
+            <div class="confirmation-status-text">
+                <h2>{{ 'Reservation Confirmed!' if booking.booking_status == 'Confirmed' else 'Reservation Cancelled' }}</h2>
+                <p>
+                    {% if booking.booking_status == 'Confirmed' %}
+                    Your hotel stay request has been successfully recorded in the reservation system.
+                    {% else %}
+                    This reservation has been cancelled. No charges or holds remain active.
+                    {% endif %}
+                </p>
+            </div>
+            <div class="confirmation-id-badge">
+                <span class="id-label">Booking Reference</span>
+                <span class="id-val" id="booking-id-text">{{ booking.booking_id }}</span>
+                <button type="button" class="btn-copy" onclick="copyBookingId()" title="Copy Booking Reference">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                    <span id="copy-btn-text">Copy</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Property Details Section -->
+        <div class="confirmation-section">
+            <h3 class="section-heading">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 21h18M3 7v14M21 7v14M6 11h2M6 15h2M10 11h2M10 15h2M14 11h2M14 15h2M18 11h2M18 15h2M9 3l3-2 3 2v4H9z"/>
+                </svg>
+                <span>Hotel Details</span>
+            </h3>
+            <div class="detail-card-inner">
+                <h4 class="property-name">{{ booking.hotel_name }}</h4>
+                <div class="hotel-address">
+                    <span class="addr-pin">📍</span>
+                    <span class="addr-text">{{ booking.hotel_address }}</span>
+                </div>
+                <div class="hotel-location">{{ booking.city }}</div>
+                <div class="hotel-sublinks">
+                    <a href="/hotel/{{ booking.hotel_id }}" class="view-prop-link" target="_blank">
+                        View Full Hotel Profile & NLP Reviews &rarr;
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Two-column: Stay Details & Guest Info -->
+        <div class="confirmation-grid">
+            <!-- Stay Details -->
+            <div class="confirmation-section">
+                <h3 class="section-heading">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    <span>Stay Itinerary</span>
+                </h3>
+                <div class="kv-table">
+                    <div class="kv-row">
+                        <span class="kv-key">Check-in</span>
+                        <span class="kv-val font-semibold">{{ booking.check_in }}</span>
+                    </div>
+                    <div class="kv-row">
+                        <span class="kv-key">Check-out</span>
+                        <span class="kv-val font-semibold">{{ booking.check_out }}</span>
+                    </div>
+                    <div class="kv-row">
+                        <span class="kv-key">Duration</span>
+                        <span class="kv-val">{{ booking.nights }} Night{{ 's' if booking.nights > 1 else '' }}</span>
+                    </div>
+                    <div class="kv-row">
+                        <span class="kv-key">Guests</span>
+                        <span class="kv-val">{{ booking.guests }} Guest{{ 's' if booking.guests > 1 else '' }}</span>
+                    </div>
+                    <div class="kv-row">
+                        <span class="kv-key">Rooms</span>
+                        <span class="kv-val">{{ booking.rooms }} Room{{ 's' if booking.rooms > 1 else '' }}</span>
+                    </div>
+                    <div class="kv-row">
+                        <span class="kv-key">Status</span>
+                        <span class="kv-val">
+                            <span class="status-pill {{ 'pill-confirmed' if booking.booking_status == 'Confirmed' else 'pill-cancelled' }}">
+                                {{ booking.booking_status }}
+                            </span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Guest Details -->
+            <div class="confirmation-section">
+                <h3 class="section-heading">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    <span>Guest Contact</span>
+                </h3>
+                <div class="kv-table">
+                    <div class="kv-row">
+                        <span class="kv-key">Lead Guest</span>
+                        <span class="kv-val font-semibold">{{ booking.guest_name }}</span>
+                    </div>
+                    <div class="kv-row">
+                        <span class="kv-key">Email</span>
+                        <span class="kv-val">{{ booking.email }}</span>
+                    </div>
+                    <div class="kv-row">
+                        <span class="kv-key">Phone</span>
+                        <span class="kv-val">{{ booking.phone }}</span>
+                    </div>
+                    {% if booking.special_request %}
+                    <div class="kv-row special-req-row">
+                        <span class="kv-key">Special Requests</span>
+                        <span class="kv-val">{{ booking.special_request }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="kv-row">
+                        <span class="kv-key">Booking Date</span>
+                        <span class="kv-val">{{ booking.created_at or 'Recorded Today' }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Breakdown -->
+        <div class="confirmation-section price-section">
+            <h3 class="section-heading">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="1" x2="12" y2="23"></line>
+                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                </svg>
+                <span>Price & Payment Summary</span>
+            </h3>
+            <div class="price-breakdown-table">
+                <div class="price-row">
+                    <span>Base Rate (₹{{ "{:,.0f}".format(booking.price_per_night) }} &times; {{ booking.nights }} night{{ 's' if booking.nights > 1 else '' }} &times; {{ booking.rooms }} room{{ 's' if booking.rooms > 1 else '' }})</span>
+                    <span>₹{{ "{:,.2f}".format(booking.total_amount) }}</span>
+                </div>
+                <div class="price-row">
+                    <span>Taxes & Service Fees</span>
+                    <span class="text-green">Included (₹0.00)</span>
+                </div>
+                <div class="price-row grand-total">
+                    <span>Total Amount</span>
+                    <span class="total-figure">₹{{ "{:,.2f}".format(booking.total_amount) }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Transparency Note -->
+        <div class="demo-system-note">
+            <span class="note-icon">ℹ️</span>
+            <div class="note-text">
+                <strong>Demonstration & Application Reservation Record:</strong>
+                This reservation has been authoritatively stored in the application's persistent database. No external third-party booking charge has been processed, ensuring full data safety while testing the discovery and reservation pipeline.
+            </div>
+        </div>
+
+        <!-- Actions Row -->
+        <div class="confirmation-actions-row">
+            <div class="left-actions">
+                <button type="button" class="btn-secondary" onclick="window.print()">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                        <rect x="6" y="14" width="12" height="8"></rect>
+                    </svg>
+                    <span>Print Voucher</span>
+                </button>
+                <a href="/my-bookings" class="btn-secondary">
+                    <span>Manage My Bookings</span>
+                </a>
+                <a href="/" class="btn-primary">
+                    <span>Discover More Hotels</span>
+                </a>
+            </div>
+
+            <div class="right-actions">
+                {% if booking.booking_status == 'Confirmed' %}
+                <form action="/booking/cancel/{{ booking.booking_id }}" method="POST" onsubmit="return confirm('Are you sure you want to cancel booking {{ booking.booking_id }}?');">
+                    <button type="submit" class="btn-cancel-booking">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="15" y1="9" x2="9" y2="15"></line>
+                            <line x1="9" y1="9" x2="15" y2="15"></line>
+                        </svg>
+                        <span>Cancel Booking</span>
+                    </button>
+                </form>
+                {% else %}
+                <span class="cancelled-notice">Booking is Cancelled</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<footer class="footer">
+    <div class="container footer-content">
+        <p>Indian Hotel Recommendation & Booking System &bull; Machine Learning & NLP Driven</p>
+        <p class="footer-sub">Persistent SQLite Booking Store &bull; Exact Dataset Address Integration</p>
+    </div>
+</footer>
+
+<script>
+function copyBookingId() {
+    const idText = document.getElementById("booking-id-text").innerText.trim();
+    navigator.clipboard.writeText(idText).then(() => {
+        const copyLabel = document.getElementById("copy-btn-text");
+        copyLabel.innerText = "Copied!";
+        setTimeout(() => {
+            copyLabel.innerText = "Copy";
+        }, 2000);
+    }).catch(() => {
+        alert("Booking ID: " + idText);
+    });
+}
+</script>
+
+</body>
+</html>

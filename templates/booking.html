@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Booking | {{ hotel.name }}</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="details-body">
+
+<!-- Navigation -->
+<header class="navbar">
+    <div class="container nav-content">
+        <div class="brand">
+            <div class="brand-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 21h18M3 7v14M21 7v14M6 11h2M6 15h2M10 11h2M10 15h2M14 11h2M14 15h2M18 11h2M18 15h2M9 3l3-2 3 2v4H9z"/>
+                </svg>
+            </div>
+            <div>
+                <a href="/" class="nav-brand-link">
+                    <h1 class="nav-title">Indian Hotel Recommendation System</h1>
+                </a>
+                <p class="nav-subtitle">Verified Hotel Discovery & Reservation Workflow</p>
+            </div>
+        </div>
+        <div class="nav-actions">
+            <a href="/my-bookings" class="nav-link-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10 9 9 9 8 9"></polyline>
+                </svg>
+                <span>My Bookings</span>
+            </a>
+            <a href="/hotel/{{ hotel.hotel_id }}" class="btn-secondary nav-back-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+                <span>Back to Hotel</span>
+            </a>
+        </div>
+    </div>
+</header>
+
+<main class="container main-content booking-page-container">
+
+    <!-- Breadcrumb -->
+    <nav class="breadcrumb">
+        <a href="/">Home</a>
+        <span>&rsaquo;</span>
+        <span class="current">{{ hotel.city or hotel.location }}</span>
+        <span>&rsaquo;</span>
+        <a href="/hotel/{{ hotel.hotel_id }}">{{ hotel.name }}</a>
+        <span>&rsaquo;</span>
+        <span class="current active">Complete Booking</span>
+    </nav>
+
+    <!-- Selected Hotel Header Card -->
+    <section class="booking-hotel-header-card">
+        <div class="booking-hotel-header-info">
+            <span class="booking-tag">Selected Property</span>
+            <h2 class="booking-hotel-title">{{ hotel.name }}</h2>
+            <div class="hotel-address">
+                <span class="addr-pin">📍</span>
+                <span class="addr-text">{{ hotel.address }}</span>
+            </div>
+            <div class="hotel-location">{{ hotel.city or hotel.location }}</div>
+            <div class="booking-hotel-badges">
+                {% if hotel.rating %}
+                <span class="badge badge-rating">★ {{ hotel.rating }} / 5.0</span>
+                {% endif %}
+                {% if hotel.sentiment %}
+                <span class="badge badge-sentiment">✓ {{ hotel.sentiment }}% Positive</span>
+                {% endif %}
+                <span class="badge badge-reviews">{{ hotel.reviews }} reviews</span>
+                <span class="badge badge-price">₹{{ "{:,}".format(hotel.price) }} / night</span>
+            </div>
+        </div>
+    </section>
+
+    {% if error %}
+    <div class="alert alert-error">
+        <span class="alert-icon">⚠️</span>
+        <span class="alert-msg">{{ error }}</span>
+    </div>
+    {% endif %}
+
+    <!-- Two-column Booking Layout -->
+    <div class="booking-grid">
+        
+        <!-- Left: Booking Form -->
+        <section class="booking-form-card">
+            <div class="form-section-header">
+                <h3>Complete Your Booking</h3>
+                <p>Please enter your guest details and confirm stay dates below.</p>
+            </div>
+
+            <form id="booking-form" method="POST" action="/book/{{ hotel.hotel_id }}">
+                
+                <!-- Guest Details -->
+                <div class="form-group-section">
+                    <h4 class="form-section-title">1. Primary Guest Details</h4>
+                    <div class="form-row">
+                        <div class="form-group full-width">
+                            <label for="guest_name">Full Name <span class="required">*</span></label>
+                            <input type="text" id="guest_name" name="guest_name" class="form-control" 
+                                   placeholder="e.g. Rahul Sharma" 
+                                   value="{{ form_data.guest_name if form_data else '' }}" required minlength="2">
+                        </div>
+                    </div>
+                    <div class="form-row two-cols">
+                        <div class="form-group">
+                            <label for="email">Email Address <span class="required">*</span></label>
+                            <input type="email" id="email" name="email" class="form-control" 
+                                   placeholder="e.g. rahul.sharma@example.com" 
+                                   value="{{ form_data.email if form_data else '' }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="phone">Mobile Number <span class="required">*</span></label>
+                            <input type="tel" id="phone" name="phone" class="form-control" 
+                                   placeholder="e.g. 9876543210" 
+                                   value="{{ form_data.phone if form_data else '' }}" required minlength="10" maxlength="15">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stay Details -->
+                <div class="form-group-section">
+                    <h4 class="form-section-title">2. Stay Details</h4>
+                    <div class="form-row two-cols">
+                        <div class="form-group">
+                            <label for="check_in">Check-in Date <span class="required">*</span></label>
+                            <input type="date" id="check_in" name="check_in" class="form-control" 
+                                   min="{{ min_check_in }}" 
+                                   value="{{ default_check_in }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="check_out">Check-out Date <span class="required">*</span></label>
+                            <input type="date" id="check_out" name="check_out" class="form-control" 
+                                   min="{{ min_check_out }}" 
+                                   value="{{ default_check_out }}" required>
+                        </div>
+                    </div>
+                    <div class="form-row two-cols">
+                        <div class="form-group">
+                            <label for="guests">Number of Guests <span class="required">*</span></label>
+                            <input type="number" id="guests" name="guests" class="form-control" 
+                                   min="1" max="20" 
+                                   value="{{ form_data.guests if form_data and form_data.guests else '2' }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="rooms">Number of Rooms <span class="required">*</span></label>
+                            <input type="number" id="rooms" name="rooms" class="form-control" 
+                                   min="1" max="10" 
+                                   value="{{ form_data.rooms if form_data and form_data.rooms else '1' }}" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Special Requests -->
+                <div class="form-group-section">
+                    <h4 class="form-section-title">3. Special Requests <span class="optional-tag">(Optional)</span></h4>
+                    <div class="form-group full-width">
+                        <textarea id="special_request" name="special_request" class="form-control" rows="3" 
+                                  placeholder="e.g. Late check-in, quiet room, upper floor, etc.">{{ form_data.special_request if form_data else '' }}</textarea>
+                    </div>
+                </div>
+
+                <div class="form-action-row mobile-only">
+                    <button type="submit" class="btn-primary btn-confirm-booking">Confirm Booking &rarr;</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Right: Sticky Booking Summary Card -->
+        <aside class="booking-summary-sidebar">
+            <div class="sticky-card booking-summary-card">
+                <h3 class="summary-card-title">Booking Summary</h3>
+                
+                <div class="summary-hotel-header">
+                    <h4 class="summary-hotel-name">{{ hotel.name }}</h4>
+                    <div class="hotel-address">
+                        <span class="addr-pin">📍</span>
+                        <span class="addr-text">{{ hotel.address }}</span>
+                    </div>
+                    <div class="hotel-location">{{ hotel.city or hotel.location }}</div>
+                </div>
+
+                <div class="summary-divider"></div>
+
+                <div class="summary-dates-grid">
+                    <div class="summary-date-box">
+                        <span class="date-label">Check-in</span>
+                        <span class="date-val" id="summary-check-in-display">--</span>
+                    </div>
+                    <div class="summary-date-box">
+                        <span class="date-label">Check-out</span>
+                        <span class="date-val" id="summary-check-out-display">--</span>
+                    </div>
+                </div>
+
+                <div class="summary-stats-line">
+                    <span id="summary-nights-badge" class="badge badge-nights">1 Night</span>
+                    <span id="summary-rooms-badge" class="badge badge-rooms">1 Room</span>
+                    <span id="summary-guests-badge" class="badge badge-guests">2 Guests</span>
+                </div>
+
+                <div class="summary-divider"></div>
+
+                <div class="summary-pricing-breakdown">
+                    <div class="pricing-row">
+                        <span>Rate per night</span>
+                        <span>₹<span id="summary-rate">{{ "{:,}".format(hotel.price) }}</span></span>
+                    </div>
+                    <div class="pricing-row">
+                        <span>Duration</span>
+                        <span><span id="summary-nights-calc">1</span> night(s)</span>
+                    </div>
+                    <div class="pricing-row">
+                        <span>Rooms</span>
+                        <span><span id="summary-rooms-calc">1</span> room(s)</span>
+                    </div>
+                    <div class="summary-divider"></div>
+                    <div class="pricing-total-row">
+                        <span class="total-label">Total Amount</span>
+                        <span class="total-amount">₹<span id="summary-total-amount">--</span></span>
+                    </div>
+                </div>
+
+                <div class="summary-action-box desktop-only">
+                    <button type="button" onclick="document.getElementById('booking-form').requestSubmit();" class="btn-primary btn-confirm-booking">
+                        Confirm Booking &rarr;
+                    </button>
+                </div>
+
+                <div class="summary-system-notice">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                    <span><strong>Application Reservation Record:</strong> This reservation will be recorded inside the system. Live third-party hotel inventory is not directly interfaced.</span>
+                </div>
+            </div>
+        </aside>
+
+    </div>
+
+</main>
+
+<script>
+    const HOTEL_PRICE = {{ hotel.price }};
+
+    function updateBookingSummary() {
+        const checkInInput = document.getElementById("check_in");
+        const checkOutInput = document.getElementById("check_out");
+        const roomsInput = document.getElementById("rooms");
+        const guestsInput = document.getElementById("guests");
+
+        const checkInVal = checkInInput.value;
+        const checkOutVal = checkOutInput.value;
+        const rooms = Math.max(1, parseInt(roomsInput.value) || 1);
+        const guests = Math.max(1, parseInt(guestsInput.value) || 1);
+
+        if (!checkInVal || !checkOutVal) return;
+
+        const dIn = new Date(checkInVal);
+        const dOut = new Date(checkOutVal);
+
+        // Date display formatting
+        const options = { day: 'numeric', month: 'short', year: 'numeric' };
+        document.getElementById("summary-check-in-display").textContent = dIn.toLocaleDateString('en-GB', options);
+        document.getElementById("summary-check-out-display").textContent = dOut.toLocaleDateString('en-GB', options);
+
+        // Night calculation
+        const diffTime = dOut - dIn;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const nights = Math.max(1, diffDays);
+
+        document.getElementById("summary-nights-badge").textContent = `${nights} ${nights === 1 ? 'Night' : 'Nights'}`;
+        document.getElementById("summary-rooms-badge").textContent = `${rooms} ${rooms === 1 ? 'Room' : 'Rooms'}`;
+        document.getElementById("summary-guests-badge").textContent = `${guests} ${guests === 1 ? 'Guest' : 'Guests'}`;
+
+        document.getElementById("summary-nights-calc").textContent = nights;
+        document.getElementById("summary-rooms-calc").textContent = rooms;
+
+        const total = HOTEL_PRICE * nights * rooms;
+        document.getElementById("summary-total-amount").textContent = total.toLocaleString("en-IN");
+
+        // Keep min checkout date strictly after check-in
+        const minOut = new Date(dIn);
+        minOut.setDate(minOut.getDate() + 1);
+        const minOutStr = minOut.toISOString().split("T")[0];
+        checkOutInput.min = minOutStr;
+
+        if (dOut <= dIn) {
+            checkOutInput.value = minOutStr;
+            updateBookingSummary();
+        }
+    }
+
+    document.getElementById("check_in").addEventListener("change", updateBookingSummary);
+    document.getElementById("check_out").addEventListener("change", updateBookingSummary);
+    document.getElementById("rooms").addEventListener("input", updateBookingSummary);
+    document.getElementById("guests").addEventListener("input", updateBookingSummary);
+
+    // Initial calculation on page load
+    document.addEventListener("DOMContentLoaded", updateBookingSummary);
+</script>
+
+</body>
+</html>

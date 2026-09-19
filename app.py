@@ -1,4 +1,6 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
+import sqlite3
+from datetime import datetime, date, timedelta
 import pandas as pd
 import numpy as np
 import joblib
@@ -8,6 +10,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 app = Flask(__name__)
+app.secret_key = "indian-hotel-recommendation-secret-key"
 
 # --------------------------------------------------
 # Load Data & Build Feature Representations
@@ -739,6 +742,347 @@ def health():
         "reviews": int(len(reviews)),
         "hotels": int(hotel_data["Hotel_ID"].nunique()),
         "locations": int(hotel_data["Location"].nunique())
+    })
+
+
+# --------------------------------------------------
+# SQLite Booking Storage & Workflows
+# --------------------------------------------------
+DB_PATH = "booking.db"
+
+
+def get_db_connection():
+    """Create a thread-safe connection to the SQLite booking database."""
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def init_booking_db():
+    """Automatically create the bookings table if it does not exist."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS bookings (
+            booking_id TEXT PRIMARY KEY,
+            hotel_id INTEGER NOT NULL,
+            hotel_name TEXT NOT NULL,
+            hotel_address TEXT,
+            city TEXT,
+            guest_name TEXT NOT NULL,
+            email TEXT NOT NULL,
+            phone TEXT NOT NULL,
+            check_in TEXT NOT NULL,
+            check_out TEXT NOT NULL,
+            guests INTEGER NOT NULL,
+            rooms INTEGER NOT NULL,
+            special_request TEXT,
+            price_per_night REAL NOT NULL,
+            nights INTEGER NOT NULL,
+            total_amount REAL NOT NULL,
+            booking_status TEXT NOT NULL DEFAULT 'Confirmed',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+
+init_booking_db()
+
+
+def generate_booking_id():
+    """Generate a collision-resistant unique Booking ID e.g. BK202609200001."""
+    today_str = datetime.now().strftime("%Y%m%d")
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT COUNT(*) FROM bookings WHERE booking_id LIKE ?",
+        (f"BK{today_str}%",)
+    )
+    count = cursor.fetchone()[0] + 1
+    conn.close()
+    return f"BK{today_str}{count:04d}"
+
+
+def validate_booking_submission(form_data, hotel_row):
+    """
+    Strict server-side validation for booking requests.
+    Validates name, email, phone, check-in, check-out, guests, rooms, and hotel existence.
+    Returns (is_valid, error_message, validated_dict).
+    """
+    if hotel_row is None or len(hotel_row) == 0:
+        return False, "Hotel not found in dataset.", {}
+
+    guest_name = str(form_data.get("guest_name", "")).strip()
+    if not guest_name or len(guest_name) < 2:
+        return False, "Please enter a valid full name (at least 2 characters).", {}
+
+    email = str(form_data.get("email", "")).strip()
+    if not email or not re.match(r"^[\w\.-]+@[\w\.-]+\.\w+$", email):
+        return False, "Please enter a valid email address.", {}
+
+    phone = str(form_data.get("phone", "")).strip()
+    digits = re.sub(r"\D", "", phone)
+    if len(digits) < 10 or len(digits) > 15:
+        return False, "Please enter a valid mobile number (10 to 15 digits).", {}
+
+    check_in_str = str(form_data.get("check_in", "")).strip()
+    check_out_str = str(form_data.get("check_out", "")).strip()
+
+    try:
+        check_in_date = datetime.strptime(check_in_str, "%Y-%m-%d").date()
+    except (ValueError, TypeError):
+        return False, "Please provide a valid check-in date in YYYY-MM-DD format.", {}
+
+    try:
+        check_out_date = datetime.strptime(check_out_str, "%Y-%m-%d").date()
+    except (ValueError, TypeError):
+        return False, "Please provide a valid check-out date in YYYY-MM-DD format.", {}
+
+    today = date.today()
+    if check_in_date < today:
+        return False, "Check-in date cannot be in the past.", {}
+
+    if check_out_date <= check_in_date:
+        return False, "Check-out date must be after check-in date.", {}
+
+    try:
+        guests = int(form_data.get("guests", 1))
+        if guests < 1:
+            return False, "Number of guests must be at least 1.", {}
+    except (ValueError, TypeError):
+        return False, "Number of guests must be a valid positive integer.", {}
+
+    try:
+        rooms = int(form_data.get("rooms", 1))
+        if rooms < 1:
+            return False, "Number of rooms must be at least 1.", {}
+    except (ValueError, TypeError):
+        return False, "Number of rooms must be a valid positive integer.", {}
+
+    special_request = str(form_data.get("special_request", "")).strip()
+
+    return True, "", {
+        "guest_name": guest_name,
+        "email": email,
+        "phone": phone,
+        "check_in": check_in_date.strftime("%Y-%m-%d"),
+        "check_out": check_out_date.strftime("%Y-%m-%d"),
+        "nights": (check_out_date - check_in_date).days,
+        "guests": guests,
+        "rooms": rooms,
+        "special_request": special_request
+    }
+
+
+@app.route("/book/<int:hotel_id>", methods=["GET", "POST"])
+def book_hotel(hotel_id):
+    hotel_matches = hotel_data[hotel_data["Hotel_ID"] == hotel_id]
+    if len(hotel_matches) == 0:
+        return render_template("404.html", message=f"Hotel with ID #{hotel_id} not found."), 404
+
+    row = hotel_matches.iloc[0]
+    display_info = HOTEL_DISPLAY_LOOKUP.get(hotel_id, {
+        "name": str(row["Hotel_Name"]),
+        "address": "Address not available",
+        "raw_address": "Address not available",
+        "city": str(row["Location"]).replace("_", " ")
+    })
+
+    hotel_info = {
+        "hotel_id": hotel_id,
+        "name": display_info["name"],
+        "raw_name": str(row["Hotel_Name"]),
+        "address": display_info["address"],
+        "raw_address": display_info.get("raw_address", display_info["address"]),
+        "city": display_info["city"],
+        "location": str(row["Location"]),
+        "price": round(float(row["Avg_Price"])) if not pd.isna(row["Avg_Price"]) else 1500,
+        "rating": round(float(row["Smoothed_Rating"]), 2) if not pd.isna(row["Smoothed_Rating"]) else None,
+        "reviews": int(row["Review_Count"]) if not pd.isna(row["Review_Count"]) else 0,
+        "sentiment": round(float(row["Smoothed_Positive_Rate"]), 1) if not pd.isna(row["Smoothed_Positive_Rate"]) else None
+    }
+
+    # Default date presets
+    today = date.today()
+    default_check_in = (today + timedelta(days=1)).strftime("%Y-%m-%d")
+    default_check_out = (today + timedelta(days=3)).strftime("%Y-%m-%d")
+    min_check_in = today.strftime("%Y-%m-%d")
+    min_check_out = (today + timedelta(days=1)).strftime("%Y-%m-%d")
+
+    if request.method == "POST":
+        data = request.get_json(silent=True) or request.form
+        is_valid, error_msg, validated = validate_booking_submission(data, row)
+
+        if not is_valid:
+            if request.is_json:
+                return jsonify({"success": False, "error": error_msg}), 400
+            flash(error_msg, "error")
+            return render_template(
+                "booking.html",
+                hotel=hotel_info,
+                form_data=data,
+                default_check_in=data.get("check_in", default_check_in),
+                default_check_out=data.get("check_out", default_check_out),
+                min_check_in=min_check_in,
+                min_check_out=min_check_out,
+                error=error_msg
+            ), 400
+
+        # Server-side authoritative price calculation
+        price_per_night = float(hotel_info["price"])
+        nights = int(validated["nights"])
+        rooms = int(validated["rooms"])
+        total_amount = round(price_per_night * nights * rooms, 2)
+
+        booking_id = generate_booking_id()
+
+        # Persist reservation into SQLite database
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO bookings (
+                booking_id, hotel_id, hotel_name, hotel_address, city,
+                guest_name, email, phone, check_in, check_out,
+                guests, rooms, special_request, price_per_night,
+                nights, total_amount, booking_status
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            booking_id,
+            hotel_id,
+            hotel_info["name"],
+            hotel_info["address"],
+            hotel_info["city"],
+            validated["guest_name"],
+            validated["email"],
+            validated["phone"],
+            validated["check_in"],
+            validated["check_out"],
+            validated["guests"],
+            validated["rooms"],
+            validated["special_request"],
+            price_per_night,
+            nights,
+            total_amount,
+            "Confirmed"
+        ))
+        conn.commit()
+        conn.close()
+
+        if request.is_json:
+            return jsonify({
+                "success": True,
+                "booking_id": booking_id,
+                "total_amount": total_amount,
+                "redirect_url": f"/booking/confirmation/{booking_id}"
+            }), 201
+
+        return redirect(url_for("booking_confirmation", booking_id=booking_id))
+
+    return render_template(
+        "booking.html",
+        hotel=hotel_info,
+        form_data={},
+        default_check_in=default_check_in,
+        default_check_out=default_check_out,
+        min_check_in=min_check_in,
+        min_check_out=min_check_out,
+        error=None
+    )
+
+
+@app.route("/booking/confirmation/<booking_id>")
+def booking_confirmation(booking_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM bookings WHERE booking_id = ?", (booking_id,))
+    booking = cursor.fetchone()
+    conn.close()
+
+    if booking is None:
+        return render_template("404.html", message=f"Booking reference '{booking_id}' not found."), 404
+
+    return render_template("booking_confirmation.html", booking=dict(booking))
+
+
+@app.route("/my-bookings")
+def my_bookings():
+    booking_id_query = request.args.get("booking_id", "").strip().upper()
+    found_booking = None
+    searched = False
+
+    if booking_id_query:
+        searched = True
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM bookings WHERE booking_id = ?", (booking_id_query,))
+        row = cursor.fetchone()
+        conn.close()
+        if row:
+            found_booking = dict(row)
+
+    return render_template(
+        "my_bookings.html",
+        booking=found_booking,
+        searched=searched,
+        query=booking_id_query
+    )
+
+
+@app.route("/booking/<booking_id>")
+def get_booking(booking_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM bookings WHERE booking_id = ?", (booking_id,))
+    row = cursor.fetchone()
+    conn.close()
+
+    if row is None:
+        return jsonify({"success": False, "message": "Booking not found"}), 404
+
+    if request.is_json or request.headers.get("Accept") == "application/json":
+        return jsonify({"success": True, "booking": dict(row)})
+
+    return redirect(url_for("booking_confirmation", booking_id=booking_id))
+
+
+@app.route("/booking/cancel/<booking_id>", methods=["POST"])
+def cancel_booking(booking_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM bookings WHERE booking_id = ?", (booking_id,))
+    row = cursor.fetchone()
+
+    if row is None:
+        conn.close()
+        if request.is_json:
+            return jsonify({"success": False, "message": "Booking not found"}), 404
+        return render_template("404.html", message=f"Booking '{booking_id}' not found."), 404
+
+    cursor.execute("UPDATE bookings SET booking_status = 'Cancelled' WHERE booking_id = ?", (booking_id,))
+    conn.commit()
+    conn.close()
+
+    if request.is_json:
+        return jsonify({"success": True, "booking_id": booking_id, "status": "Cancelled"})
+
+    flash("Your reservation has been cancelled.", "info")
+    return redirect(url_for("booking_confirmation", booking_id=booking_id))
+
+
+@app.route("/api/hotel/<int:hotel_id>/pricing")
+def api_hotel_pricing(hotel_id):
+    hotel_matches = hotel_data[hotel_data["Hotel_ID"] == hotel_id]
+    if len(hotel_matches) == 0:
+        return jsonify({"success": False, "error": "Hotel not found"}), 404
+
+    row = hotel_matches.iloc[0]
+    price = round(float(row["Avg_Price"])) if not pd.isna(row["Avg_Price"]) else 1500
+    return jsonify({
+        "success": True,
+        "hotel_id": hotel_id,
+        "price_per_night": price
     })
 
 
