@@ -895,7 +895,14 @@ body {
     justify-content: space-between;
     align-items: flex-start;
     gap: 12px;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
+}
+
+.hotel-title-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
 .hotel-name {
@@ -903,6 +910,28 @@ body {
     font-weight: 700;
     color: var(--neutral-900);
     line-height: 1.35;
+}
+
+.hotel-address {
+    font-size: 0.84rem;
+    color: var(--neutral-700);
+    display: flex;
+    align-items: flex-start;
+    gap: 5px;
+    line-height: 1.4;
+    word-break: break-word;
+    margin-top: 2px;
+}
+
+.hotel-address .addr-pin {
+    font-size: 0.86rem;
+    flex-shrink: 0;
+    line-height: 1.3;
+}
+
+.hotel-address .addr-text {
+    color: var(--neutral-700);
+    font-weight: 500;
 }
 
 .score-badge {
@@ -921,9 +950,10 @@ body {
     display: flex;
     align-items: center;
     gap: 5px;
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     color: var(--neutral-500);
-    margin-bottom: 14px;
+    margin-top: 2px;
+    margin-bottom: 12px;
 }
 
 /* Pricing and Rating in Card */
@@ -1140,6 +1170,50 @@ body {
     color: var(--neutral-900);
     letter-spacing: -0.02em;
     margin-bottom: 4px;
+}
+
+.hero-hotel-address {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    font-size: 0.95rem;
+    color: var(--neutral-700);
+    margin-top: 4px;
+    margin-bottom: 8px;
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+.hero-hotel-address .addr-pin {
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.hero-hotel-address .addr-text {
+    font-weight: 500;
+    color: var(--neutral-800);
+}
+
+.hero-map-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--primary-600);
+    background-color: var(--primary-50);
+    border: 1px solid var(--primary-200);
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    margin-left: 6px;
+    transition: all 0.15s ease;
+}
+
+.hero-map-btn:hover {
+    background-color: var(--primary-100);
+    color: var(--primary-800);
 }
 
 .hero-hotel-id {
