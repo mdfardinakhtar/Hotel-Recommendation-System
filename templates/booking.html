@@ -11,7 +11,7 @@
 </head>
 <body class="details-body">
 
-<!-- Navigation -->
+<!-- Top Navigation -->
 <header class="navbar">
     <div class="container nav-content">
         <div class="brand">
@@ -49,270 +49,658 @@
     </div>
 </header>
 
-<main class="container main-content booking-page-container">
+<main class="container main-content booking-checkout-container">
 
-    <!-- Breadcrumb -->
-    <nav class="breadcrumb">
-        <a href="/">Home</a>
-        <span>&rsaquo;</span>
-        <span class="current">{{ hotel.city or hotel.location }}</span>
-        <span>&rsaquo;</span>
-        <a href="/hotel/{{ hotel.hotel_id }}">{{ hotel.name }}</a>
-        <span>&rsaquo;</span>
-        <span class="current active">Complete Booking</span>
-    </nav>
+    <!-- Top Action & Title Header -->
+    <div class="checkout-header-area">
+        <a href="/hotel/{{ hotel.hotel_id }}" class="checkout-back-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            <span>Back to Hotel</span>
+        </a>
 
-    <!-- Selected Hotel Header Card -->
-    <section class="booking-hotel-header-card">
-        <div class="booking-hotel-header-info">
-            <span class="booking-tag">Selected Property</span>
-            <h2 class="booking-hotel-title">{{ hotel.name }}</h2>
-            <div class="hotel-address">
-                <span class="addr-pin">📍</span>
-                <span class="addr-text">{{ hotel.address }}</span>
+        <div class="checkout-title-row">
+            <div>
+                <h1 class="checkout-title">Complete Your Booking</h1>
+                <p class="checkout-subtitle">Enter your details to confirm your stay</p>
             </div>
-            <div class="hotel-location">{{ hotel.city or hotel.location }}</div>
-            <div class="booking-hotel-badges">
+
+            <!-- Subtle Professional Progress Stepper -->
+            <div class="booking-progress-stepper" aria-label="Booking Progress">
+                <div class="stepper-step step-done">
+                    <span class="step-badge">✓</span>
+                    <span class="step-text">1. Hotel</span>
+                </div>
+                <div class="stepper-line line-active"></div>
+                <div class="stepper-step step-active" aria-current="step">
+                    <span class="step-badge">2</span>
+                    <span class="step-text">2. Guest Details</span>
+                </div>
+                <div class="stepper-line"></div>
+                <div class="stepper-step step-upcoming">
+                    <span class="step-badge">3</span>
+                    <span class="step-text">3. Confirmation</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Selected-Hotel Card (Compact, Real Data, No Fake Images) -->
+    <section class="hotel-summary-compact-card" aria-label="Selected Hotel Summary">
+        <div class="compact-hotel-main">
+            <div class="compact-hotel-badge-row">
+                <span class="property-tag">Selected Property</span>
+                <span class="hotel-id-tag">Hotel #{{ hotel.hotel_id }}</span>
+            </div>
+            <h2 class="compact-hotel-name">{{ hotel.name }}</h2>
+            <div class="compact-hotel-address">
+                <span class="pin-icon">📍</span>
+                <span class="address-text">{{ hotel.address }}</span>
+            </div>
+            <div class="compact-hotel-city">{{ hotel.city or hotel.location }}</div>
+        </div>
+
+        <div class="compact-hotel-meta">
+            <div class="compact-badges-group">
                 {% if hotel.rating %}
-                <span class="badge badge-rating">★ {{ hotel.rating }} / 5.0</span>
+                <span class="meta-pill pill-rating">★ {{ hotel.rating }}</span>
                 {% endif %}
                 {% if hotel.sentiment %}
-                <span class="badge badge-sentiment">✓ {{ hotel.sentiment }}% Positive</span>
+                <span class="meta-pill pill-sentiment">✓ {{ hotel.sentiment }}% Positive</span>
                 {% endif %}
-                <span class="badge badge-reviews">{{ hotel.reviews }} reviews</span>
-                <span class="badge badge-price">₹{{ "{:,}".format(hotel.price) }} / night</span>
+                <span class="meta-pill pill-reviews">{{ hotel.reviews }} reviews</span>
+            </div>
+            <div class="compact-rate-box">
+                <span class="rate-price">₹{{ "{:,}".format(hotel.price) }}</span>
+                <span class="rate-label">/ night</span>
             </div>
         </div>
     </section>
 
+    <!-- Global Server Flash Error Notice if validation failed on server -->
     {% if error %}
-    <div class="alert alert-error">
-        <span class="alert-icon">⚠️</span>
-        <span class="alert-msg">{{ error }}</span>
+    <div class="checkout-alert-error" role="alert">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <span class="alert-message">{{ error }}</span>
     </div>
     {% endif %}
 
-    <!-- Two-column Booking Layout -->
-    <div class="booking-grid">
-        
-        <!-- Left: Booking Form -->
-        <section class="booking-form-card">
-            <div class="form-section-header">
-                <h3>Complete Your Booking</h3>
-                <p>Please enter your guest details and confirm stay dates below.</p>
+    <!-- Two-Column Checkout Form Layout -->
+    <form id="booking-form" method="POST" action="/book/{{ hotel.hotel_id }}" novalidate>
+        <div class="checkout-grid">
+            
+            <!-- ============================================== -->
+            <!-- LEFT COLUMN: Guest Details, Stay Details, Notes -->
+            <!-- ============================================== -->
+            <div class="checkout-form-column">
+
+                <!-- 1. Guest Details Card -->
+                <section class="checkout-card" id="section-guest-details">
+                    <div class="card-title-group">
+                        <div class="card-icon-bubble">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="card-main-title">Guest Details</h3>
+                            <p class="card-sub-title">Who is staying? Primary Guest Details for this reservation.</p>
+                        </div>
+                    </div>
+
+                    <div class="card-form-body">
+                        <!-- Full Name -->
+                        <div class="form-field-row">
+                            <label for="guest_name" class="field-label">
+                                Full Name <span class="required-indicator">*</span>
+                            </label>
+                            <div class="field-input-wrapper" id="wrap-guest_name">
+                                <span class="field-icon">
+                                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                        <circle cx="12" cy="7" r="4"></circle>
+                                    </svg>
+                                </span>
+                                <input 
+                                    type="text" 
+                                    id="guest_name" 
+                                    name="guest_name" 
+                                    class="modern-input" 
+                                    placeholder="e.g. Rahul Sharma" 
+                                    value="{{ form_data.guest_name if form_data else '' }}" 
+                                    required 
+                                    minlength="2" 
+                                    autocomplete="name"
+                                >
+                            </div>
+                            <span class="field-error-text" id="err-guest_name"></span>
+                        </div>
+
+                        <!-- Email & Mobile Number Grid -->
+                        <div class="form-field-grid-2">
+                            <!-- Email Address -->
+                            <div class="form-field-row">
+                                <label for="email" class="field-label">
+                                    Email Address <span class="required-indicator">*</span>
+                                </label>
+                                <div class="field-input-wrapper" id="wrap-email">
+                                    <span class="field-icon">
+                                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                            <polyline points="22,6 12,13 2,6"></polyline>
+                                        </svg>
+                                    </span>
+                                    <input 
+                                        type="email" 
+                                        id="email" 
+                                        name="email" 
+                                        class="modern-input" 
+                                        placeholder="e.g. rahul.sharma@example.com" 
+                                        value="{{ form_data.email if form_data else '' }}" 
+                                        required 
+                                        autocomplete="email"
+                                    >
+                                </div>
+                                <span class="field-error-text" id="err-email"></span>
+                            </div>
+
+                            <!-- Mobile Number -->
+                            <div class="form-field-row">
+                                <label for="phone" class="field-label">
+                                    Mobile Number <span class="required-indicator">*</span>
+                                </label>
+                                <div class="field-input-wrapper" id="wrap-phone">
+                                    <span class="field-icon">
+                                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                                        </svg>
+                                    </span>
+                                    <input 
+                                        type="tel" 
+                                        id="phone" 
+                                        name="phone" 
+                                        class="modern-input" 
+                                        placeholder="e.g. 9876543210" 
+                                        value="{{ form_data.phone if form_data else '' }}" 
+                                        required 
+                                        minlength="10" 
+                                        maxlength="15" 
+                                        autocomplete="tel"
+                                    >
+                                </div>
+                                <span class="field-error-text" id="err-phone"></span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. Stay Details Card -->
+                <section class="checkout-card" id="section-stay-details">
+                    <div class="card-title-group">
+                        <div class="card-icon-bubble">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="card-main-title">Stay Details</h3>
+                            <p class="card-sub-title">Plan your stay</p>
+                        </div>
+                    </div>
+
+                    <div class="card-form-body">
+                        <!-- Dates Row: Check-in & Check-out -->
+                        <div class="form-field-grid-2">
+                            <div class="form-field-row">
+                                <label for="check_in" class="field-label">
+                                    Check-in <span class="required-indicator">*</span>
+                                </label>
+                                <div class="field-input-wrapper" id="wrap-check_in">
+                                    <span class="field-icon">
+                                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                                        </svg>
+                                    </span>
+                                    <input 
+                                        type="date" 
+                                        id="check_in" 
+                                        name="check_in" 
+                                        class="modern-input" 
+                                        min="{{ min_check_in }}" 
+                                        value="{{ default_check_in }}" 
+                                        required
+                                    >
+                                </div>
+                                <span class="field-error-text" id="err-check_in"></span>
+                            </div>
+
+                            <div class="form-field-row">
+                                <label for="check_out" class="field-label">
+                                    Check-out <span class="required-indicator">*</span>
+                                </label>
+                                <div class="field-input-wrapper" id="wrap-check_out">
+                                    <span class="field-icon">
+                                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                                        </svg>
+                                    </span>
+                                    <input 
+                                        type="date" 
+                                        id="check_out" 
+                                        name="check_out" 
+                                        class="modern-input" 
+                                        min="{{ min_check_out }}" 
+                                        value="{{ default_check_out }}" 
+                                        required
+                                    >
+                                </div>
+                                <span class="field-error-text" id="err-check_out"></span>
+                            </div>
+                        </div>
+
+                        <!-- Occupancy Row: Guests & Rooms -->
+                        <div class="form-field-grid-2">
+                            <div class="form-field-row">
+                                <label for="guests" class="field-label">
+                                    Guests <span class="required-indicator">*</span>
+                                </label>
+                                <div class="field-input-wrapper" id="wrap-guests">
+                                    <span class="field-icon">
+                                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                            <circle cx="9" cy="7" r="4"></circle>
+                                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                        </svg>
+                                    </span>
+                                    <select id="guests" name="guests" class="modern-select" required>
+                                        {% set cur_guests = (form_data.guests|int) if form_data and form_data.guests else 2 %}
+                                        <option value="1" {% if cur_guests == 1 %}selected{% endif %}>1 Guest</option>
+                                        <option value="2" {% if cur_guests == 2 %}selected{% endif %}>2 Guests</option>
+                                        <option value="3" {% if cur_guests == 3 %}selected{% endif %}>3 Guests</option>
+                                        <option value="4" {% if cur_guests == 4 %}selected{% endif %}>4 Guests</option>
+                                        <option value="5" {% if cur_guests == 5 %}selected{% endif %}>5 Guests</option>
+                                        <option value="6" {% if cur_guests >= 6 %}selected{% endif %}>6+ Guests</option>
+                                    </select>
+                                </div>
+                                <span class="field-error-text" id="err-guests"></span>
+                            </div>
+
+                            <div class="form-field-row">
+                                <label for="rooms" class="field-label">
+                                    Rooms <span class="required-indicator">*</span>
+                                </label>
+                                <div class="field-input-wrapper" id="wrap-rooms">
+                                    <span class="field-icon">
+                                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M3 7v14M21 7v14M6 11h2M6 15h2M10 11h2M10 15h2M14 11h2M14 15h2M18 11h2M18 15h2M9 3l3-2 3 2v4H9z"></path>
+                                        </svg>
+                                    </span>
+                                    <select id="rooms" name="rooms" class="modern-select" required>
+                                        {% set cur_rooms = (form_data.rooms|int) if form_data and form_data.rooms else 1 %}
+                                        <option value="1" {% if cur_rooms == 1 %}selected{% endif %}>1 Room</option>
+                                        <option value="2" {% if cur_rooms == 2 %}selected{% endif %}>2 Rooms</option>
+                                        <option value="3" {% if cur_rooms == 3 %}selected{% endif %}>3 Rooms</option>
+                                        <option value="4" {% if cur_rooms >= 4 %}selected{% endif %}>4 Rooms</option>
+                                    </select>
+                                </div>
+                                <span class="field-error-text" id="err-rooms"></span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 3. Special Request (Optional) Card -->
+                <section class="checkout-card card-secondary-styled">
+                    <div class="card-title-group">
+                        <div class="card-icon-bubble bubble-secondary">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="card-main-title">Special Request <span class="optional-pill">Optional</span></h3>
+                            <p class="card-sub-title">Anything you'd like the hotel to know (e.g. late check-in, quiet room, high floor).</p>
+                        </div>
+                    </div>
+                    <div class="card-form-body">
+                        <textarea 
+                            id="special_request" 
+                            name="special_request" 
+                            class="modern-textarea" 
+                            rows="3" 
+                            placeholder="Anything you'd like the hotel to know..."
+                        >{{ form_data.special_request if form_data else '' }}</textarea>
+                    </div>
+                </section>
+
             </div>
 
-            <form id="booking-form" method="POST" action="/book/{{ hotel.hotel_id }}">
-                
-                <!-- Guest Details -->
-                <div class="form-group-section">
-                    <h4 class="form-section-title">1. Primary Guest Details</h4>
-                    <div class="form-row">
-                        <div class="form-group full-width">
-                            <label for="guest_name">Full Name <span class="required">*</span></label>
-                            <input type="text" id="guest_name" name="guest_name" class="form-control" 
-                                   placeholder="e.g. Rahul Sharma" 
-                                   value="{{ form_data.guest_name if form_data else '' }}" required minlength="2">
+            <!-- ============================================== -->
+            <!-- RIGHT COLUMN: Sticky Booking Summary Card       -->
+            <!-- ============================================== -->
+            <aside class="checkout-summary-column">
+                <div class="sticky-booking-summary-card">
+                    
+                    <!-- Summary Card Header -->
+                    <div class="summary-header">
+                        <h3 class="summary-card-title">Your Booking</h3>
+                    </div>
+
+                    <!-- Hotel Details Snippet in Summary -->
+                    <div class="summary-property-block">
+                        <h4 class="summary-hotel-name">{{ hotel.name }}</h4>
+                        <div class="summary-hotel-address">
+                            <span class="pin">📍</span>
+                            <span class="addr">{{ hotel.address }}</span>
+                        </div>
+                        <div class="summary-hotel-city">{{ hotel.city or hotel.location }}</div>
+                    </div>
+
+                    <!-- Stay Dates & Occupancy Grid -->
+                    <div class="summary-stay-grid">
+                        <div class="summary-stay-cell">
+                            <span class="cell-label">Check-in</span>
+                            <span class="cell-date" id="display-checkin">--</span>
+                        </div>
+                        <div class="summary-stay-cell">
+                            <span class="cell-label">Check-out</span>
+                            <span class="cell-date" id="display-checkout">--</span>
                         </div>
                     </div>
-                    <div class="form-row two-cols">
-                        <div class="form-group">
-                            <label for="email">Email Address <span class="required">*</span></label>
-                            <input type="email" id="email" name="email" class="form-control" 
-                                   placeholder="e.g. rahul.sharma@example.com" 
-                                   value="{{ form_data.email if form_data else '' }}" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="phone">Mobile Number <span class="required">*</span></label>
-                            <input type="tel" id="phone" name="phone" class="form-control" 
-                                   placeholder="e.g. 9876543210" 
-                                   value="{{ form_data.phone if form_data else '' }}" required minlength="10" maxlength="15">
-                        </div>
-                    </div>
-                </div>
 
-                <!-- Stay Details -->
-                <div class="form-group-section">
-                    <h4 class="form-section-title">2. Stay Details</h4>
-                    <div class="form-row two-cols">
-                        <div class="form-group">
-                            <label for="check_in">Check-in Date <span class="required">*</span></label>
-                            <input type="date" id="check_in" name="check_in" class="form-control" 
-                                   min="{{ min_check_in }}" 
-                                   value="{{ default_check_in }}" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="check_out">Check-out Date <span class="required">*</span></label>
-                            <input type="date" id="check_out" name="check_out" class="form-control" 
-                                   min="{{ min_check_out }}" 
-                                   value="{{ default_check_out }}" required>
-                        </div>
+                    <!-- Occupancy Pill Bar -->
+                    <div class="summary-meta-line" id="display-meta-line">
+                        2 Guests · 1 Room
                     </div>
-                    <div class="form-row two-cols">
-                        <div class="form-group">
-                            <label for="guests">Number of Guests <span class="required">*</span></label>
-                            <input type="number" id="guests" name="guests" class="form-control" 
-                                   min="1" max="20" 
-                                   value="{{ form_data.guests if form_data and form_data.guests else '2' }}" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="rooms">Number of Rooms <span class="required">*</span></label>
-                            <input type="number" id="rooms" name="rooms" class="form-control" 
-                                   min="1" max="10" 
-                                   value="{{ form_data.rooms if form_data and form_data.rooms else '1' }}" required>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- Special Requests -->
-                <div class="form-group-section">
-                    <h4 class="form-section-title">3. Special Requests <span class="optional-tag">(Optional)</span></h4>
-                    <div class="form-group full-width">
-                        <textarea id="special_request" name="special_request" class="form-control" rows="3" 
-                                  placeholder="e.g. Late check-in, quiet room, upper floor, etc.">{{ form_data.special_request if form_data else '' }}</textarea>
-                    </div>
-                </div>
-
-                <div class="form-action-row mobile-only">
-                    <button type="submit" class="btn-primary btn-confirm-booking">Confirm Booking &rarr;</button>
-                </div>
-            </form>
-        </section>
-
-        <!-- Right: Sticky Booking Summary Card -->
-        <aside class="booking-summary-sidebar">
-            <div class="sticky-card booking-summary-card">
-                <h3 class="summary-card-title">Booking Summary</h3>
-                
-                <div class="summary-hotel-header">
-                    <h4 class="summary-hotel-name">{{ hotel.name }}</h4>
-                    <div class="hotel-address">
-                        <span class="addr-pin">📍</span>
-                        <span class="addr-text">{{ hotel.address }}</span>
-                    </div>
-                    <div class="hotel-location">{{ hotel.city or hotel.location }}</div>
-                </div>
-
-                <div class="summary-divider"></div>
-
-                <div class="summary-dates-grid">
-                    <div class="summary-date-box">
-                        <span class="date-label">Check-in</span>
-                        <span class="date-val" id="summary-check-in-display">--</span>
-                    </div>
-                    <div class="summary-date-box">
-                        <span class="date-label">Check-out</span>
-                        <span class="date-val" id="summary-check-out-display">--</span>
-                    </div>
-                </div>
-
-                <div class="summary-stats-line">
-                    <span id="summary-nights-badge" class="badge badge-nights">1 Night</span>
-                    <span id="summary-rooms-badge" class="badge badge-rooms">1 Room</span>
-                    <span id="summary-guests-badge" class="badge badge-guests">2 Guests</span>
-                </div>
-
-                <div class="summary-divider"></div>
-
-                <div class="summary-pricing-breakdown">
-                    <div class="pricing-row">
-                        <span>Rate per night</span>
-                        <span>₹<span id="summary-rate">{{ "{:,}".format(hotel.price) }}</span></span>
-                    </div>
-                    <div class="pricing-row">
-                        <span>Duration</span>
-                        <span><span id="summary-nights-calc">1</span> night(s)</span>
-                    </div>
-                    <div class="pricing-row">
-                        <span>Rooms</span>
-                        <span><span id="summary-rooms-calc">1</span> room(s)</span>
-                    </div>
                     <div class="summary-divider"></div>
-                    <div class="pricing-total-row">
-                        <span class="total-label">Total Amount</span>
-                        <span class="total-amount">₹<span id="summary-total-amount">--</span></span>
+
+                    <!-- Authoritative Price Breakdown Table -->
+                    <div class="summary-price-breakdown">
+                        <div class="breakdown-row">
+                            <span class="breakdown-label">Price per night</span>
+                            <span class="breakdown-val">₹<span id="breakdown-rate">{{ "{:,}".format(hotel.price) }}</span></span>
+                        </div>
+                        <div class="breakdown-row">
+                            <span class="breakdown-label">Number of nights</span>
+                            <span class="breakdown-val" id="breakdown-nights">2</span>
+                        </div>
+                        <div class="breakdown-row">
+                            <span class="breakdown-label">Number of rooms</span>
+                            <span class="breakdown-val" id="breakdown-rooms">1</span>
+                        </div>
+                        <div class="summary-divider"></div>
+                        <div class="breakdown-total-row">
+                            <span class="total-label-text">Total Amount</span>
+                            <span class="total-amount-display">₹<span id="breakdown-total">--</span></span>
+                        </div>
                     </div>
-                </div>
 
-                <div class="summary-action-box desktop-only">
-                    <button type="button" onclick="document.getElementById('booking-form').requestSubmit();" class="btn-primary btn-confirm-booking">
-                        Confirm Booking &rarr;
-                    </button>
-                </div>
+                    <!-- Main Call-to-Action: Confirm Booking Button -->
+                    <div class="summary-cta-block">
+                        <button type="submit" id="btn-submit-booking" class="btn-confirm-booking-cta">
+                            <span class="spinner-icon hidden" id="submit-spinner" aria-hidden="true"></span>
+                            <span id="submit-button-text">Confirm Booking</span>
+                        </button>
+                    </div>
 
-                <div class="summary-system-notice">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="12" y1="16" x2="12" y2="12"></line>
-                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                    </svg>
-                    <span><strong>Application Reservation Record:</strong> This reservation will be recorded inside the system. Live third-party hotel inventory is not directly interfaced.</span>
-                </div>
-            </div>
-        </aside>
+                    <!-- Trust & Security Area (Honest, accurate disclosure) -->
+                    <div class="summary-trust-section">
+                        <div class="trust-point">
+                            <span class="trust-check">✓</span>
+                            <span class="trust-desc">Secure booking information</span>
+                        </div>
+                        <div class="trust-point">
+                            <span class="trust-check">✓</span>
+                            <span class="trust-desc">Your booking details are stored securely</span>
+                        </div>
+                        <p class="trust-disclaimer">
+                            Your reservation will be recorded in the booking system.
+                        </p>
+                    </div>
 
-    </div>
+                </div>
+            </aside>
+
+        </div>
+    </form>
 
 </main>
 
+<footer class="footer">
+    <div class="container footer-content">
+        <p>Indian Hotel Recommendation System &bull; Intelligent Travel Search & Reservation Platform</p>
+        <p class="footer-sub">Verified Dataset Profiles &bull; Authoritative Reservation Store</p>
+    </div>
+</footer>
+
+<!-- Interactive Checkout Controller & Real-Time Calculation -->
 <script>
+(function() {
     const HOTEL_PRICE = {{ hotel.price }};
+    
+    const form = document.getElementById("booking-form");
+    const nameInput = document.getElementById("guest_name");
+    const emailInput = document.getElementById("email");
+    const phoneInput = document.getElementById("phone");
+    const checkInInput = document.getElementById("check_in");
+    const checkOutInput = document.getElementById("check_out");
+    const guestsInput = document.getElementById("guests");
+    const roomsInput = document.getElementById("rooms");
+    
+    const displayCheckin = document.getElementById("display-checkin");
+    const displayCheckout = document.getElementById("display-checkout");
+    const displayMetaLine = document.getElementById("display-meta-line");
+    const breakdownNights = document.getElementById("breakdown-nights");
+    const breakdownRooms = document.getElementById("breakdown-rooms");
+    const breakdownTotal = document.getElementById("breakdown-total");
+    
+    const submitBtn = document.getElementById("btn-submit-booking");
+    const submitText = document.getElementById("submit-button-text");
+    const submitSpinner = document.getElementById("submit-spinner");
 
-    function updateBookingSummary() {
-        const checkInInput = document.getElementById("check_in");
-        const checkOutInput = document.getElementById("check_out");
-        const roomsInput = document.getElementById("rooms");
-        const guestsInput = document.getElementById("guests");
+    // Format YYYY-MM-DD to "25 Sep 2026"
+    function formatDisplayDate(dateStr) {
+        if (!dateStr) return "--";
+        const parts = dateStr.split("-");
+        if (parts.length !== 3) return dateStr;
+        const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+        return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+    }
 
-        const checkInVal = checkInInput.value;
-        const checkOutVal = checkOutInput.value;
-        const rooms = Math.max(1, parseInt(roomsInput.value) || 1);
-        const guests = Math.max(1, parseInt(guestsInput.value) || 1);
-
-        if (!checkInVal || !checkOutVal) return;
-
-        const dIn = new Date(checkInVal);
-        const dOut = new Date(checkOutVal);
-
-        // Date display formatting
-        const options = { day: 'numeric', month: 'short', year: 'numeric' };
-        document.getElementById("summary-check-in-display").textContent = dIn.toLocaleDateString('en-GB', options);
-        document.getElementById("summary-check-out-display").textContent = dOut.toLocaleDateString('en-GB', options);
-
-        // Night calculation
-        const diffTime = dOut - dIn;
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        const nights = Math.max(1, diffDays);
-
-        document.getElementById("summary-nights-badge").textContent = `${nights} ${nights === 1 ? 'Night' : 'Nights'}`;
-        document.getElementById("summary-rooms-badge").textContent = `${rooms} ${rooms === 1 ? 'Room' : 'Rooms'}`;
-        document.getElementById("summary-guests-badge").textContent = `${guests} ${guests === 1 ? 'Guest' : 'Guests'}`;
-
-        document.getElementById("summary-nights-calc").textContent = nights;
-        document.getElementById("summary-rooms-calc").textContent = rooms;
-
-        const total = HOTEL_PRICE * nights * rooms;
-        document.getElementById("summary-total-amount").textContent = total.toLocaleString("en-IN");
-
-        // Keep min checkout date strictly after check-in
-        const minOut = new Date(dIn);
-        minOut.setDate(minOut.getDate() + 1);
-        const minOutStr = minOut.toISOString().split("T")[0];
-        checkOutInput.min = minOutStr;
-
-        if (dOut <= dIn) {
-            checkOutInput.value = minOutStr;
-            updateBookingSummary();
+    // Set error message on field
+    function setFieldError(fieldId, errorMsg) {
+        const wrap = document.getElementById("wrap-" + fieldId);
+        const errSpan = document.getElementById("err-" + fieldId);
+        if (wrap) {
+            if (errorMsg) {
+                wrap.classList.add("input-has-error");
+                wrap.classList.remove("input-is-valid");
+            } else {
+                wrap.classList.remove("input-has-error");
+                wrap.classList.add("input-is-valid");
+            }
+        }
+        if (errSpan) {
+            errSpan.textContent = errorMsg || "";
         }
     }
 
-    document.getElementById("check_in").addEventListener("change", updateBookingSummary);
-    document.getElementById("check_out").addEventListener("change", updateBookingSummary);
-    document.getElementById("rooms").addEventListener("input", updateBookingSummary);
-    document.getElementById("guests").addEventListener("input", updateBookingSummary);
+    function clearFieldError(fieldId) {
+        setFieldError(fieldId, "");
+    }
 
-    // Initial calculation on page load
-    document.addEventListener("DOMContentLoaded", updateBookingSummary);
+    // Real-time live summary and price calculation
+    function recalculateBooking() {
+        const cinVal = checkInInput.value;
+        const coutVal = checkOutInput.value;
+        const guests = Math.max(1, parseInt(guestsInput.value) || 1);
+        const rooms = Math.max(1, parseInt(roomsInput.value) || 1);
+
+        if (!cinVal || !coutVal) return;
+
+        const dIn = new Date(cinVal);
+        const dOut = new Date(coutVal);
+
+        // Update displays
+        displayCheckin.textContent = formatDisplayDate(cinVal);
+        displayCheckout.textContent = formatDisplayDate(coutVal);
+
+        // Night calculation
+        const diffMs = dOut.getTime() - dIn.getTime();
+        const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+        const nights = Math.max(1, diffDays);
+
+        displayMetaLine.textContent = `${guests} Guest${guests > 1 ? 's' : ''} · ${rooms} Room${rooms > 1 ? 's' : ''} (${nights} Night${nights > 1 ? 's' : ''})`;
+        breakdownNights.textContent = nights;
+        breakdownRooms.textContent = rooms;
+
+        // Total price calculation
+        const total = Math.round(HOTEL_PRICE * nights * rooms);
+        breakdownTotal.textContent = total.toLocaleString("en-IN");
+
+        // Keep min checkout strictly after check-in
+        const nextDay = new Date(dIn);
+        nextDay.setDate(nextDay.getDate() + 1);
+        const nextDayStr = nextDay.toISOString().split("T")[0];
+        checkOutInput.min = nextDayStr;
+
+        if (dOut <= dIn) {
+            checkOutInput.value = nextDayStr;
+            recalculateBooking();
+        }
+    }
+
+    // Individual field validation
+    function validateName() {
+        const val = (nameInput.value || "").trim();
+        if (!val || val.length < 2) {
+            setFieldError("guest_name", "Please enter a valid full name (at least 2 characters).");
+            return false;
+        }
+        clearFieldError("guest_name");
+        return true;
+    }
+
+    function validateEmail() {
+        const val = (emailInput.value || "").trim();
+        const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!val || !regex.test(val)) {
+            setFieldError("email", "Please enter a valid email address.");
+            return false;
+        }
+        clearFieldError("email");
+        return true;
+    }
+
+    function validatePhone() {
+        const raw = (phoneInput.value || "").trim();
+        const digitsOnly = raw.replace(/\D/g, "");
+        if (!digitsOnly || digitsOnly.length < 10 || digitsOnly.length > 15) {
+            setFieldError("phone", "Please enter a valid mobile number (10 to 15 digits).");
+            return false;
+        }
+        clearFieldError("phone");
+        return true;
+    }
+
+    function validateDates() {
+        const cinVal = checkInInput.value;
+        const coutVal = checkOutInput.value;
+        const today = new Date().toISOString().split("T")[0];
+
+        if (!cinVal) {
+            setFieldError("check_in", "Check-in date is required.");
+            return false;
+        }
+        if (cinVal < today) {
+            setFieldError("check_in", "Check-in date cannot be in the past.");
+            return false;
+        }
+        clearFieldError("check_in");
+
+        if (!coutVal) {
+            setFieldError("check_out", "Check-out date is required.");
+            return false;
+        }
+        if (coutVal <= cinVal) {
+            setFieldError("check_out", "Check-out date must be after check-in date.");
+            return false;
+        }
+        clearFieldError("check_out");
+        return true;
+    }
+
+    // Event listeners
+    nameInput.addEventListener("blur", validateName);
+    nameInput.addEventListener("input", function() { if (nameInput.value.trim().length >= 2) clearFieldError("guest_name"); });
+    
+    emailInput.addEventListener("blur", validateEmail);
+    emailInput.addEventListener("input", function() { if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput.value.trim())) clearFieldError("email"); });
+    
+    phoneInput.addEventListener("blur", validatePhone);
+    phoneInput.addEventListener("input", function() { if (phoneInput.value.replace(/\D/g, "").length >= 10) clearFieldError("phone"); });
+
+    checkInInput.addEventListener("change", function() {
+        validateDates();
+        recalculateBooking();
+    });
+    
+    checkOutInput.addEventListener("change", function() {
+        validateDates();
+        recalculateBooking();
+    });
+
+    guestsInput.addEventListener("change", recalculateBooking);
+    roomsInput.addEventListener("change", recalculateBooking);
+
+    // Form submission handling & double-submit prevention
+    form.addEventListener("submit", function(e) {
+        const isNameValid = validateName();
+        const isEmailValid = validateEmail();
+        const isPhoneValid = validatePhone();
+        const areDatesValid = validateDates();
+
+        if (!isNameValid || !isEmailValid || !isPhoneValid || !areDatesValid) {
+            e.preventDefault();
+            // Scroll to first invalid field
+            const firstErr = document.querySelector(".input-has-error");
+            if (firstErr) {
+                firstErr.scrollIntoView({ behavior: "smooth", block: "center" });
+                const inp = firstErr.querySelector("input, select");
+                if (inp) inp.focus();
+            }
+            return false;
+        }
+
+        // Show loading state and prevent double submit
+        submitBtn.disabled = true;
+        submitBtn.classList.add("btn-loading");
+        submitSpinner.classList.remove("hidden");
+        submitText.textContent = "Processing Booking...";
+    });
+
+    // Run initial recalculation on load
+    document.addEventListener("DOMContentLoaded", recalculateBooking);
+    recalculateBooking();
+})();
 </script>
 
 </body>

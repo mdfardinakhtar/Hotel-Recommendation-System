@@ -22,3 +22,7 @@ Thumbs.db
 *.db
 booking.db
 
+# Scratch directory
+scratch/
+
+
