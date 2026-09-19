@@ -84,55 +84,95 @@
             <!-- Preference Selection Section -->
             <div class="form-group preference-section">
                 <div class="preference-header-row">
-                    <label class="preference-label">What are you looking for?</label>
+                    <label class="preference-label" for="pref-search-input">What are you looking for?</label>
                     <button type="button" id="clear-pref-btn" class="clear-all-btn hidden" onclick="clearAllPreferences()">
                         Clear All
                     </button>
                 </div>
-                <p class="preference-subtitle">Select one or more preferences:</p>
+
+                <!-- Modern Search Bar to Filter Preference Options -->
+                <div class="pref-search-wrapper">
+                    <span class="pref-search-icon">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                    </span>
+                    <input 
+                        type="text" 
+                        id="pref-search-input" 
+                        class="pref-search-input" 
+                        placeholder="Search preferences... (e.g. room, clean, food, staff)" 
+                        autocomplete="off"
+                        aria-label="Filter available preference options"
+                        oninput="filterPreferenceOptions(this.value)"
+                    >
+                    <button 
+                        type="button" 
+                        id="clear-search-btn" 
+                        class="pref-search-clear hidden" 
+                        onclick="clearSearchInput()"
+                        aria-label="Clear preference search filter"
+                        title="Clear search filter"
+                    >&times;</button>
+                </div>
+
+                <!-- Selected Preferences Summary Bar (Shown when >= 1 option selected) -->
+                <div id="selected-summary-container" class="selected-summary-container hidden">
+                    <span class="selected-summary-label">Selected:</span>
+                    <div id="selected-chips-list" class="selected-chips-list"></div>
+                </div>
+
+                <p class="preference-subtitle" id="pref-options-caption">Select one or more preferences:</p>
 
                 <!-- Selectable Preference Chips Grid -->
                 <div class="preference-chips-grid" id="preference-chips-container">
-                    <button type="button" class="pref-card" data-key="clean_room" onclick="togglePreference('clean_room')">
+                    <button type="button" class="pref-card" data-key="clean_room" data-title="Clean Room" onclick="togglePreference('clean_room')">
                         <span class="pref-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
                         <span class="pref-title">Clean Room</span>
                     </button>
-                    <button type="button" class="pref-card" data-key="friendly_staff" onclick="togglePreference('friendly_staff')">
+                    <button type="button" class="pref-card" data-key="friendly_staff" data-title="Friendly Staff" onclick="togglePreference('friendly_staff')">
                         <span class="pref-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
                         <span class="pref-title">Friendly Staff</span>
                     </button>
-                    <button type="button" class="pref-card" data-key="good_food" onclick="togglePreference('good_food')">
+                    <button type="button" class="pref-card" data-key="good_food" data-title="Good Food" onclick="togglePreference('good_food')">
                         <span class="pref-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
                         <span class="pref-title">Good Food</span>
                     </button>
-                    <button type="button" class="pref-card" data-key="comfortable_room" onclick="togglePreference('comfortable_room')">
+                    <button type="button" class="pref-card" data-key="comfortable_room" data-title="Comfortable Room" onclick="togglePreference('comfortable_room')">
                         <span class="pref-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
                         <span class="pref-title">Comfortable Room</span>
                     </button>
-                    <button type="button" class="pref-card" data-key="good_cleanliness" onclick="togglePreference('good_cleanliness')">
+                    <button type="button" class="pref-card" data-key="good_cleanliness" data-title="Good Cleanliness" onclick="togglePreference('good_cleanliness')">
                         <span class="pref-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
                         <span class="pref-title">Good Cleanliness</span>
                     </button>
-                    <button type="button" class="pref-card" data-key="affordable" onclick="togglePreference('affordable')">
+                    <button type="button" class="pref-card" data-key="affordable" data-title="Affordable" onclick="togglePreference('affordable')">
                         <span class="pref-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
                         <span class="pref-title">Affordable</span>
                     </button>
-                    <button type="button" class="pref-card" data-key="good_location" onclick="togglePreference('good_location')">
+                    <button type="button" class="pref-card" data-key="good_location" data-title="Good Location" onclick="togglePreference('good_location')">
                         <span class="pref-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
                         <span class="pref-title">Good Location</span>
                     </button>
-                    <button type="button" class="pref-card" data-key="good_service" onclick="togglePreference('good_service')">
+                    <button type="button" class="pref-card" data-key="good_service" data-title="Good Service" onclick="togglePreference('good_service')">
                         <span class="pref-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
                         <span class="pref-title">Good Service</span>
                     </button>
-                    <button type="button" class="pref-card" data-key="family_friendly" onclick="togglePreference('family_friendly')">
+                    <button type="button" class="pref-card" data-key="family_friendly" data-title="Family Friendly" onclick="togglePreference('family_friendly')">
                         <span class="pref-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
                         <span class="pref-title">Family Friendly</span>
                     </button>
-                    <button type="button" class="pref-card" data-key="good_facilities" onclick="togglePreference('good_facilities')">
+                    <button type="button" class="pref-card" data-key="good_facilities" data-title="Good Facilities" onclick="togglePreference('good_facilities')">
                         <span class="pref-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
                         <span class="pref-title">Good Facilities</span>
                     </button>
+                </div>
+
+                <!-- Empty search result state for preference filter -->
+                <div id="no-pref-matches" class="no-pref-matches hidden">
+                    <p>No preference options match "<span id="no-pref-query"></span>".</p>
+                    <button type="button" class="btn-text" onclick="clearSearchInput()">Show all options</button>
                 </div>
 
                 <!-- Hidden input maintaining backwards compatibility with any existing form listeners -->
