@@ -499,7 +499,14 @@ async function getRecommendations() {
         // Render cards
         renderHotelCards(currentHotels);
         resultsWrapper.classList.remove("hidden");
+        updateTopBackButton(true);
+        saveSearchState();
 
+        if (window.location.hash !== "#results") {
+            history.pushState({ step: "results" }, "", "#results");
+        }
+
+        resultsWrapper.scrollIntoView({ behavior: "smooth", block: "start" });
     } catch (error) {
         console.error("Recommendation request failed:", error);
         loadingState.classList.add("hidden");
@@ -533,6 +540,7 @@ function handleSortChange() {
     }
 
     renderHotelCards(sortedList);
+    saveSearchState();
 }
 
 function toggleWhyAccordion(index) {
@@ -737,9 +745,211 @@ function escapeHtml(str) {
         .replace(/'/g, "&#039;");
 }
 
-// Initialize city autocomplete component when DOM is loaded
-if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initCityAutocomplete);
-} else {
+// ==========================================================================
+// Navigation History & State Preservation Controller
+// ==========================================================================
+
+function updateTopBackButton(show) {
+    const topBackBtn = document.getElementById("top-back-btn");
+    if (topBackBtn) {
+        if (show) {
+            topBackBtn.classList.remove("hidden");
+        } else {
+            topBackBtn.classList.add("hidden");
+        }
+    }
+}
+
+function saveSearchState() {
+    try {
+        const state = {
+            cityValue: selectedCityValue,
+            cityLabel: selectedCityLabel,
+            cityInput: document.getElementById("city-search-input")?.value || "",
+            budget: document.getElementById("budget")?.value || "",
+            minRating: document.getElementById("min_rating")?.value || "",
+            selectedPreferences: Array.from(selectedPreferences),
+            currentPreference: currentPreference,
+            hotels: currentHotels,
+            aspectsText: document.getElementById("detected-aspects-text")?.textContent || "",
+            resultsCountText: document.getElementById("results-count-title")?.textContent || "",
+            isRelaxed: !document.getElementById("fallback-banner")?.classList.contains("hidden"),
+            fallbackTitle: document.getElementById("fallback-title")?.textContent || "",
+            fallbackMessage: document.getElementById("fallback-message")?.textContent || "",
+            sortBy: document.getElementById("sort-by")?.value || "recommended",
+            hasResults: true
+        };
+        sessionStorage.setItem("hotel_recommendation_search_state", JSON.stringify(state));
+    } catch (e) {
+        console.warn("Could not persist search state to sessionStorage:", e);
+    }
+}
+
+function restoreSearchStateIfPresent() {
+    try {
+        const raw = sessionStorage.getItem("hotel_recommendation_search_state");
+        if (!raw) return false;
+        const state = JSON.parse(raw);
+        if (!state || !state.hasResults || !state.hotels || state.hotels.length === 0) return false;
+
+        // Restore city selection
+        if (state.cityValue) {
+            selectCity(state.cityValue, state.cityLabel || state.cityValue);
+        } else if (state.cityInput) {
+            const searchInput = document.getElementById("city-search-input");
+            if (searchInput) searchInput.value = state.cityInput;
+        }
+
+        // Restore budget
+        const budgetInput = document.getElementById("budget");
+        if (budgetInput && state.budget !== undefined) {
+            budgetInput.value = state.budget;
+        }
+
+        // Restore min rating
+        const minRatingSelect = document.getElementById("min_rating");
+        if (minRatingSelect && state.minRating !== undefined) {
+            minRatingSelect.value = state.minRating;
+        }
+
+        // Restore preference chips
+        clearAllPreferences();
+        if (Array.isArray(state.selectedPreferences)) {
+            state.selectedPreferences.forEach(key => togglePreference(key));
+        }
+
+        // Restore current preference
+        currentPreference = state.currentPreference || "";
+        const prefInput = document.getElementById("preference");
+        if (prefInput) prefInput.value = currentPreference;
+
+        // Restore metadata
+        const detectedAspectsText = document.getElementById("detected-aspects-text");
+        const resultsCountTitle = document.getElementById("results-count-title");
+        if (detectedAspectsText && state.aspectsText) detectedAspectsText.textContent = state.aspectsText;
+        if (resultsCountTitle && state.resultsCountText) resultsCountTitle.textContent = state.resultsCountText;
+
+        // Restore fallback banner if active
+        const fallbackBanner = document.getElementById("fallback-banner");
+        const fallbackTitle = document.getElementById("fallback-title");
+        const fallbackMessage = document.getElementById("fallback-message");
+        if (state.isRelaxed && fallbackBanner) {
+            if (fallbackTitle && state.fallbackTitle) fallbackTitle.textContent = state.fallbackTitle;
+            if (fallbackMessage && state.fallbackMessage) fallbackMessage.textContent = state.fallbackMessage;
+            fallbackBanner.classList.remove("hidden");
+        } else if (fallbackBanner) {
+            fallbackBanner.classList.add("hidden");
+        }
+
+        // Restore sort selection
+        const sortBySelect = document.getElementById("sort-by");
+        if (sortBySelect && state.sortBy) {
+            sortBySelect.value = state.sortBy;
+        }
+
+        // Restore hotels list
+        currentHotels = state.hotels;
+
+        // Render cards
+        if (state.sortBy && state.sortBy !== "recommended") {
+            handleSortChange();
+        } else {
+            renderHotelCards(currentHotels);
+        }
+
+        // Reveal results and top Back button
+        const resultsWrapper = document.getElementById("results-wrapper");
+        if (resultsWrapper) {
+            resultsWrapper.classList.remove("hidden");
+        }
+        updateTopBackButton(true);
+
+        return true;
+    } catch (err) {
+        console.warn("Could not restore search state:", err);
+        return false;
+    }
+}
+
+function handleGoBack() {
+    const resultsWrapper = document.getElementById("results-wrapper");
+    const isResultsVisible = resultsWrapper && !resultsWrapper.classList.contains("hidden");
+
+    if (isResultsVisible) {
+        // If results are open, going Back takes the user to the Search form
+        if (window.location.hash === "#results") {
+            window.history.back();
+        } else {
+            showSearchView();
+        }
+    } else {
+        // If already at Search page, check browser history or fallback to home
+        if (document.referrer && (document.referrer.indexOf(window.location.host) !== -1 || document.referrer.startsWith(window.location.origin))) {
+            window.history.back();
+        } else if (window.history.length > 1) {
+            window.history.back();
+        } else {
+            window.location.href = "/";
+        }
+    }
+}
+
+function showSearchView() {
+    const resultsWrapper = document.getElementById("results-wrapper");
+    const fallbackBanner = document.getElementById("fallback-banner");
+    const emptyState = document.getElementById("empty-state");
+    const errorState = document.getElementById("error-state");
+
+    if (resultsWrapper) resultsWrapper.classList.add("hidden");
+    if (fallbackBanner) fallbackBanner.classList.add("hidden");
+    if (emptyState) emptyState.classList.add("hidden");
+    if (errorState) errorState.classList.add("hidden");
+    updateTopBackButton(false);
+
+    if (window.location.hash === "#results") {
+        history.replaceState({ step: "search" }, "", window.location.pathname);
+    }
+
+    const searchCard = document.querySelector(".search-card");
+    if (searchCard) {
+        searchCard.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+}
+
+// Popstate listener for browser back/forward navigation
+window.addEventListener("popstate", function(event) {
+    if (event.state && event.state.step === "results") {
+        restoreSearchStateIfPresent();
+    } else if (window.location.hash === "#results") {
+        restoreSearchStateIfPresent();
+    } else {
+        showSearchView();
+    }
+});
+
+// Pageshow listener for bfcache restoration
+window.addEventListener("pageshow", function(event) {
+    if (window.location.hash === "#results") {
+        const resultsWrapper = document.getElementById("results-wrapper");
+        if (!resultsWrapper || resultsWrapper.classList.contains("hidden") || !currentHotels || currentHotels.length === 0) {
+            restoreSearchStateIfPresent();
+        } else {
+            updateTopBackButton(true);
+        }
+    }
+});
+
+function initApp() {
     initCityAutocomplete();
+    // If arriving with #results hash or returning from details page
+    if (window.location.hash === "#results") {
+        restoreSearchStateIfPresent();
+    }
+}
+
+// Initialize application when DOM is loaded
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initApp);
+} else {
+    initApp();
 }
