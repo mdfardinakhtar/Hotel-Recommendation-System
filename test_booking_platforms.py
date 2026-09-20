@@ -152,8 +152,7 @@ class TestBookingPlatformArchitecture(unittest.TestCase):
         self.assertIn('rel="noopener noreferrer"', html)
 
         # Must have required disclaimers verbatim
-        self.assertIn("Your booking will be completed on the selected booking platform.", html)
-        self.assertIn("Prices and availability may vary on external booking platforms.", html)
+        self.assertIn("Your booking will be completed on the selected booking platform. Prices and availability may vary.", html)
 
         # Must have required sentiment note verbatim
         self.assertIn("Hotel rating is the customer's numerical rating. ML sentiment is the sentiment predicted from the review text.", html)
@@ -171,6 +170,43 @@ class TestBookingPlatformArchitecture(unittest.TestCase):
         self.assertNotIn('/my-bookings', html)
         self.assertNotIn('My Bookings', html)
 
+    def test_official_domains_and_queries(self):
+        """Verify all 5 platforms point to official domains and include hotel name & city."""
+        test_hotel = "The Leela Palace"
+        test_city = "Bangalore"
+        test_address = "23 Old Airport Road, Kodihalli, Karnataka 560008"
+
+        links = get_booking_platform_links(test_hotel, test_city, test_address)
+        self.assertEqual(len(links), 5)
+
+        official_domains = {
+            "makemytrip": "www.makemytrip.com",
+            "goibibo": "www.goibibo.com",
+            "booking_com": "www.booking.com",
+            "agoda": "www.agoda.com",
+            "oyo": "www.oyorooms.com"
+        }
+
+        for link in links:
+            pid = link["id"]
+            self.assertIn(pid, official_domains)
+            parsed = urllib.parse.urlparse(link["url"])
+            self.assertEqual(parsed.netloc, official_domains[pid])
+            self.assertIn("The+Leela+Palace", link["url"])
+            self.assertIn("Bangalore", link["url"])
+
+    def test_card_rendering_script_contains_platform_discovery(self):
+        """Verify static/script.js includes the Where can I find this hotel section and exact disclaimer."""
+        with open("static/script.js", "r", encoding="utf-8") as f:
+            script_content = f.read()
+
+        self.assertIn("Where can I find this hotel?", script_content)
+        self.assertIn('target="_blank"', script_content)
+        self.assertIn('rel="noopener noreferrer"', script_content)
+        self.assertIn("Your booking will be completed on the selected booking platform. Prices and availability may vary.", script_content)
+        self.assertIn("Search on", script_content)
+
 
 if __name__ == "__main__":
     unittest.main()
+

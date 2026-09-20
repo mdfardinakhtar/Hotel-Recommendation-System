@@ -647,8 +647,7 @@ function renderHotelCards(hotels) {
                         ${buttonsHtml}
                     </div>
                     <div class="card-discovery-disclaimers">
-                        <p class="card-disclaimer-item">Your booking will be completed on the selected booking platform.</p>
-                        <p class="card-disclaimer-item">Prices and availability may vary on external booking platforms.</p>
+                        <p class="card-disclaimer-item">Your booking will be completed on the selected booking platform. Prices and availability may vary.</p>
                     </div>
                 </div>
             `;
