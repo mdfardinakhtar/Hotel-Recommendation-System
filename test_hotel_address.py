@@ -42,9 +42,9 @@ def run_tests():
     # Verify pure hotel name and address without duplicate city
     assert h1["name"] == "OYO Hotel Subha Residency", f"Expected pure name 'OYO Hotel Subha Residency', got '{h1['name']}'"
     assert "Near Cubbon Park" not in h1["name"], "Landmark should not be in hotel name"
-    assert h1["address"] == "Near Cubbon Park", f"Expected 'Near Cubbon Park', got '{h1['address']}'"
+    assert h1["address"] == "Near Cubbon Park, Karnataka", f"Expected 'Near Cubbon Park, Karnataka', got '{h1['address']}'"
     assert "Bangalore" not in h1["address"], "City should not be duplicated in displayed address"
-    assert h1.get("raw_address") == "Near Cubbon Park, Bangalore", "Raw address should preserve city"
+    assert h1.get("raw_address") == "Near Cubbon Park, Bangalore, Karnataka", "Raw address should preserve city"
 
     # 2. Test /recommend with Jaipur query
     resp_jpr = requests.post(f"{BASE_URL}/recommend", json={
@@ -66,7 +66,9 @@ def run_tests():
     assert "address" in h2
     assert h2["location"] == "Jaipur"
     assert h2["name"] == "Super OYO Hotel Tourist Residency"
-    assert h2["address"] == "Address not available"
+    assert h2["address"] == "Rajasthan", f"Expected 'Rajasthan', got '{h2['address']}'"
+    assert "Jaipur" not in h2["address"], "City should not be duplicated in displayed address"
+    assert h2.get("raw_address") == "Jaipur, Rajasthan"
 
     # 3. Test /recommend with Delhi query
     resp_del = requests.post(f"{BASE_URL}/recommend", json={
@@ -87,6 +89,10 @@ def run_tests():
     print(f"  Score:    {h3['score']}%")
     assert "address" in h3
     assert h3["location"] == "Delhi_Transit"
+    assert h3["name"] == "OYO Hotel Cozy Cave"
+    assert h3["address"] == "Near IGI Airport, Mahipalpur", f"Expected 'Near IGI Airport, Mahipalpur', got '{h3['address']}'"
+    assert "Delhi" not in h3["address"], "City should not be duplicated in displayed address"
+    assert h3.get("raw_address") == "Near IGI Airport, Mahipalpur, Delhi"
 
     # 4. Test /recommend with Mumbai query
     resp_mum = requests.post(f"{BASE_URL}/recommend", json={
@@ -107,6 +113,10 @@ def run_tests():
     print(f"  Score:    {h4['score']}%")
     assert "address" in h4
     assert h4["location"] == "Mumbai"
+    assert h4["name"] == "Super OYO Townhouse OAK Hotel Devanshi Inn"
+    assert h4["address"] == "Maharashtra", f"Expected 'Maharashtra', got '{h4['address']}'"
+    assert "Mumbai" not in h4["address"], "City should not be duplicated in displayed address"
+    assert h4.get("raw_address") == "Mumbai, Maharashtra"
 
     # 5. Test /recommend with Hyderabad query
     resp_hyd = requests.post(f"{BASE_URL}/recommend", json={
@@ -129,9 +139,9 @@ def run_tests():
     assert h5["location"] == "Hyderabad"
     assert h5["name"] == "Super OYO Capital O Hotel Sai Balaji"
     assert "Near Golconda Fort" not in h5["name"], "Landmark should not be in hotel name"
-    assert h5["address"] == "Near Golconda Fort", f"Expected 'Near Golconda Fort', got '{h5['address']}'"
+    assert h5["address"] == "Near Golconda Fort, Telangana", f"Expected 'Near Golconda Fort, Telangana', got '{h5['address']}'"
     assert "Hyderabad" not in h5["address"], "City should not be duplicated in displayed address"
-    assert h5.get("raw_address") == "Near Golconda Fort, Hyderabad", "Raw address should preserve city"
+    assert h5.get("raw_address") == "Near Golconda Fort, Hyderabad, Telangana", "Raw address should preserve city"
 
     # 6. Verify Hotel Details page (/hotel/<hotel_id>) shows displayed address without duplicate city
     print("\n--- Testing Hotel Details Pages Consistency ---")

@@ -122,11 +122,243 @@ def format_address_for_display(address, city, location=None):
     return formatted if formatted else "Address not available"
 
 
+# --------------------------------------------------
+# Indian City to State Mapping (all 251 locations)
+# --------------------------------------------------
+CITY_STATE_MAP = {
+    "Abohar": "Punjab", "Agartala": "Tripura", "Agra": "Uttar Pradesh",
+    "Ahmedabad": "Gujarat", "Ahmednagar": "Maharashtra", "Aizawl": "Mizoram",
+    "Ajmer": "Rajasthan", "Akola": "Maharashtra", "Alappuzha": "Kerala",
+    "Alibag": "Maharashtra", "Aligarh": "Uttar Pradesh", "Alipurduar": "West Bengal",
+    "Almora": "Uttarakhand", "Alwar": "Rajasthan", "Ambala": "Haryana",
+    "Amravati": "Maharashtra", "Amritsar": "Punjab", "Anand": "Gujarat",
+    "Anantapur": "Andhra Pradesh", "Angul": "Odisha", "Ankleshwar": "Gujarat",
+    "Arakku": "Andhra Pradesh", "Arrah": "Bihar", "Asansol": "West Bengal",
+    "Aurangabad": "Maharashtra", "Ayodhya": "Uttar Pradesh", "Baddi": "Himachal Pradesh",
+    "Bagalkot": "Karnataka", "Bahraich": "Uttar Pradesh", "Balaghat": "Madhya Pradesh",
+    "Balangir": "Odisha", "Balasore": "Odisha", "Ballia": "Uttar Pradesh",
+    "Balrampur": "Uttar Pradesh", "Balurghat": "West Bengal", "Banda": "Uttar Pradesh",
+    "Bangalore": "Karnataka", "Banka": "Bihar", "Bankura": "West Bengal",
+    "Barabanki": "Uttar Pradesh", "Baramati": "Maharashtra", "Baran": "Rajasthan",
+    "Barbil": "Odisha", "Bardhaman": "West Bengal", "Bareilly": "Uttar Pradesh",
+    "Bargarh": "Odisha", "Barmer": "Rajasthan", "Barnala": "Punjab",
+    "Baripada": "Odisha", "Baroda": "Gujarat", "Bastar": "Chhattisgarh",
+    "Basti": "Uttar Pradesh", "Batala": "Punjab", "Bathinda": "Punjab",
+    "Beawar": "Rajasthan", "Begusarai": "Bihar", "Belgaum": "Karnataka",
+    "Bellary": "Karnataka", "Betul": "Madhya Pradesh", "Bhadohi": "Uttar Pradesh",
+    "Bhagalpur": "Bihar", "Bharatpur": "Rajasthan", "Bharuch": "Gujarat",
+    "Bhavnagar": "Gujarat", "Bhilai": "Chhattisgarh", "Bhilwara": "Rajasthan",
+    "Bhimavaram": "Andhra Pradesh", "Bhind": "Madhya Pradesh", "Bhiwadi": "Rajasthan",
+    "Bhiwani": "Haryana", "Bhopal": "Madhya Pradesh", "Bhubaneswar": "Odisha",
+    "Bhuj": "Gujarat", "Bhusawal": "Maharashtra", "Bidar": "Karnataka",
+    "Bijapur": "Karnataka", "Bikaner": "Rajasthan", "Bilaspur": "Chhattisgarh",
+    "Bina": "Madhya Pradesh", "Bodhgaya": "Bihar", "Bokaro": "Jharkhand",
+    "Bolpur": "West Bengal", "Bongaigaon": "Assam", "Budaun": "Uttar Pradesh",
+    "Bulandshahr": "Uttar Pradesh", "Bundi": "Rajasthan", "Burhanpur": "Madhya Pradesh",
+    "Buxar": "Bihar", "Calicut": "Kerala", "Chamba": "Himachal Pradesh",
+    "Chamoli": "Uttarakhand", "Champawat": "Uttarakhand", "Chandannagar": "West Bengal",
+    "Chandigarh": "Chandigarh", "Chandrapur": "Maharashtra", "Chapra": "Bihar",
+    "Chennai": "Tamil Nadu", "Chhatarpur": "Madhya Pradesh", "Chhindwara": "Madhya Pradesh",
+    "Chikmagalur": "Karnataka", "Chiplun": "Maharashtra", "Chitrakoot": "Uttar Pradesh",
+    "Chittorgarh": "Rajasthan", "Coimbatore": "Tamil Nadu", "Coochbehar": "West Bengal",
+    "Coonoor": "Tamil Nadu", "Cuddalore": "Tamil Nadu", "Cuttack": "Odisha",
+    "Dahod": "Gujarat", "Dalhousie": "Himachal Pradesh", "Daman": "Daman and Diu",
+    "Damoh": "Madhya Pradesh", "Darbhanga": "Bihar", "Darjeeling": "West Bengal",
+    "Datia": "Madhya Pradesh", "Dausa": "Rajasthan", "Davangere": "Karnataka",
+    "Dehradun": "Uttarakhand", "Deoghar": "Jharkhand", "Deoria": "Uttar Pradesh",
+    "Dewas": "Madhya Pradesh", "Dhanbad": "Jharkhand", "Dhar": "Madhya Pradesh",
+    "Dharamshala": "Himachal Pradesh", "Dharmapuri": "Tamil Nadu", "Dharwad": "Karnataka",
+    "Dholpur": "Rajasthan", "Dhule": "Maharashtra", "Dibrugarh": "Assam",
+    "Digha": "West Bengal", "Dimapur": "Nagaland", "Dindigul": "Tamil Nadu",
+    "Diu": "Daman and Diu", "Dumka": "Jharkhand", "Durg": "Chhattisgarh",
+    "Durgapur": "West Bengal", "Dwarka": "Gujarat", "Eluru": "Andhra Pradesh",
+    "Erode": "Tamil Nadu", "Etah": "Uttar Pradesh", "Etawah": "Uttar Pradesh",
+    "Faizabad": "Uttar Pradesh", "Faridabad": "Haryana", "Farrukhabad": "Uttar Pradesh",
+    "Fatehabad": "Haryana", "Fatehpur": "Uttar Pradesh", "Fazilka": "Punjab",
+    "Firozabad": "Uttar Pradesh", "Firozpur": "Punjab", "Gadag": "Karnataka",
+    "Gadchiroli": "Maharashtra", "Gandhidham": "Gujarat", "Gandhinagar": "Gujarat",
+    "Gangtok": "Sikkim", "Gaya": "Bihar", "Ghaziabad": "Uttar Pradesh",
+    "Ghazipur": "Uttar Pradesh", "Giridih": "Jharkhand", "Goa": "Goa",
+    "Godhra": "Gujarat", "Gonda": "Uttar Pradesh", "Gondia": "Maharashtra",
+    "Gorakhpur": "Uttar Pradesh", "Gulbarga": "Karnataka", "Gumla": "Jharkhand",
+    "Guna": "Madhya Pradesh", "Guntur": "Andhra Pradesh", "Gurdaspur": "Punjab",
+    "Gurgaon": "Haryana", "Guwahati": "Assam", "Gwalior": "Madhya Pradesh",
+    "Hajipur": "Bihar", "Haldia": "West Bengal", "Haldwani": "Uttarakhand",
+    "Hampi": "Karnataka", "Hansi": "Haryana", "Hanumangarh": "Rajasthan",
+    "Hapur": "Uttar Pradesh", "Harda": "Madhya Pradesh", "Hardoi": "Uttar Pradesh",
+    "Haridwar": "Uttarakhand", "Hassan": "Karnataka", "Hathras": "Uttar Pradesh",
+    "Haveri": "Karnataka", "Hazaribagh": "Jharkhand", "Himmatnagar": "Gujarat",
+    "Hisar": "Haryana", "Hoshangabad": "Madhya Pradesh", "Hoshiarpur": "Punjab",
+    "Hospet": "Karnataka", "Hosur": "Tamil Nadu", "Hubli": "Karnataka",
+    "Hyderabad": "Telangana", "Idukki": "Kerala", "Imphal": "Manipur",
+    "Indore": "Madhya Pradesh", "Itanagar": "Arunachal Pradesh", "Jabalpur": "Madhya Pradesh",
+    "Jagdalpur": "Chhattisgarh", "Jaipur": "Rajasthan", "Jaisalmer": "Rajasthan",
+    "Jajpur": "Odisha", "Jalandhar": "Punjab", "Jalaun": "Uttar Pradesh",
+    "Jalgaon": "Maharashtra", "Jalna": "Maharashtra", "Jalpaiguri": "West Bengal",
+    "Jammu": "Jammu and Kashmir", "Jamnagar": "Gujarat", "Jamshedpur": "Jharkhand",
+    "Jaunpur": "Uttar Pradesh", "Jhabua": "Madhya Pradesh", "Jhajjar": "Haryana",
+    "Jhalawar": "Rajasthan", "Jhansi": "Uttar Pradesh", "Jhunjhunu": "Rajasthan",
+    "Jind": "Haryana", "Jodhpur": "Rajasthan", "Jorhat": "Assam",
+    "Junagadh": "Gujarat", "Kadapa": "Andhra Pradesh", "Kaithal": "Haryana",
+    "Kakinada": "Andhra Pradesh", "Kalaburagi": "Karnataka", "Kanchipuram": "Tamil Nadu",
+    "Kannauj": "Uttar Pradesh", "Kannur": "Kerala", "Kanpur": "Uttar Pradesh",
+    "Kanyakumari": "Tamil Nadu", "Kapurthala": "Punjab", "Karaikudi": "Tamil Nadu",
+    "Karnal": "Haryana", "Karur": "Tamil Nadu", "Kasganj": "Uttar Pradesh",
+    "Kashipur": "Uttarakhand", "Katihar": "Bihar", "Katra": "Jammu and Kashmir",
+    "Kavali": "Andhra Pradesh", "Khammam": "Telangana", "Khandwa": "Madhya Pradesh",
+    "Khanna": "Punjab", "Kharagpur": "West Bengal", "Kochi": "Kerala",
+    "Kodaikanal": "Tamil Nadu", "Kohima": "Nagaland", "Kolar": "Karnataka",
+    "Kolhapur": "Maharashtra", "Kolkata": "West Bengal", "Kollam": "Kerala",
+    "Kota": "Rajasthan", "Kotdwar": "Uttarakhand", "Kottayam": "Kerala",
+    "Kozhikode": "Kerala", "Krishnanagar": "West Bengal", "Kullu": "Himachal Pradesh",
+    "Kumbakonam": "Tamil Nadu", "Kurnool": "Andhra Pradesh", "Kurukshetra": "Haryana",
+    "Lakhimpur": "Uttar Pradesh", "Lalitpur": "Uttar Pradesh", "Latur": "Maharashtra",
+    "Lucknow": "Uttar Pradesh", "Ludhiana": "Punjab", "Madikeri": "Karnataka",
+    "Madurai": "Tamil Nadu", "Mahabaleshwar": "Maharashtra", "Mahbubnagar": "Telangana",
+    "Mainpuri": "Uttar Pradesh", "Malappuram": "Kerala", "Malda": "West Bengal",
+    "Malegaon": "Maharashtra", "Manali": "Himachal Pradesh", "Mandapam": "Tamil Nadu",
+    "Mandi": "Himachal Pradesh", "Mandsaur": "Madhya Pradesh", "Mandya": "Karnataka",
+    "Mangalore": "Karnataka", "Manipal": "Karnataka", "Mathura": "Uttar Pradesh",
+    "Meerut": "Uttar Pradesh", "Mehsana": "Gujarat", "Mirzapur": "Uttar Pradesh",
+    "Moga": "Punjab", "Mohali": "Punjab", "Moradabad": "Uttar Pradesh",
+    "Morbi": "Gujarat", "Morena": "Madhya Pradesh", "Motihari": "Bihar",
+    "Mount Abu": "Rajasthan", "Muktsar": "Punjab", "Mumbai": "Maharashtra",
+    "Munger": "Bihar", "Murshidabad": "West Bengal", "Mussoorie": "Uttarakhand",
+    "Muzaffarnagar": "Uttar Pradesh", "Muzaffarpur": "Bihar", "Mysore": "Karnataka",
+    "Nadiad": "Gujarat", "Nagaon": "Assam", "Nagapattinam": "Tamil Nadu",
+    "Nagaur": "Rajasthan", "Nagercoil": "Tamil Nadu", "Nagpur": "Maharashtra",
+    "Nainital": "Uttarakhand", "Nalanda": "Bihar", "Nanded": "Maharashtra",
+    "Nandurbar": "Maharashtra", "Nandyal": "Andhra Pradesh", "Nashik": "Maharashtra",
+    "Navsari": "Gujarat", "Neemuch": "Madhya Pradesh", "Nellore": "Andhra Pradesh",
+    "Nizamabad": "Telangana", "Noida": "Uttar Pradesh", "Ongole": "Andhra Pradesh",
+    "Ooty": "Tamil Nadu", "Osmanabad": "Maharashtra", "Palakkad": "Kerala",
+    "Palanpur": "Gujarat", "Pali": "Rajasthan", "Palwal": "Haryana",
+    "Panchkula": "Haryana", "Panipat": "Haryana", "Panjim": "Goa",
+    "Parbhani": "Maharashtra", "Pathankot": "Punjab", "Patiala": "Punjab",
+    "Patna": "Bihar", "Phagwara": "Punjab", "Pilibhit": "Uttar Pradesh",
+    "Pondicherry": "Puducherry", "Porbandar": "Gujarat", "Pratapgarh": "Uttar Pradesh",
+    "Prayagraj": "Uttar Pradesh", "Pudukkottai": "Tamil Nadu", "Pune": "Maharashtra",
+    "Puri": "Odisha", "Purnea": "Bihar", "Purulia": "West Bengal",
+    "Rae Bareli": "Uttar Pradesh", "Raichur": "Karnataka", "Raigad": "Maharashtra",
+    "Raigarh": "Chhattisgarh", "Raipur": "Chhattisgarh", "Rajahmundry": "Andhra Pradesh",
+    "Rajapalayam": "Tamil Nadu", "Rajkot": "Gujarat", "Rajnandgaon": "Chhattisgarh",
+    "Rajsamand": "Rajasthan", "Ramanathapuram": "Tamil Nadu", "Ramgarh": "Jharkhand",
+    "Rampur": "Uttar Pradesh", "Ranchi": "Jharkhand", "Raniganj": "West Bengal",
+    "Ratlam": "Madhya Pradesh", "Ratnagiri": "Maharashtra", "Rewa": "Madhya Pradesh",
+    "Rewari": "Haryana", "Rishikesh": "Uttarakhand", "Rohtak": "Haryana",
+    "Roorkee": "Uttarakhand", "Rourkela": "Odisha", "Sagar": "Madhya Pradesh",
+    "Saharanpur": "Uttar Pradesh", "Saharsa": "Bihar", "Salem": "Tamil Nadu",
+    "Samastipur": "Bihar", "Sambalpur": "Odisha", "Sangli": "Maharashtra",
+    "Satara": "Maharashtra", "Satna": "Madhya Pradesh", "Sawai Madhopur": "Rajasthan",
+    "Secunderabad": "Telangana", "Sehore": "Madhya Pradesh", "Shahjahanpur": "Uttar Pradesh",
+    "Shillong": "Meghalaya", "Shimla": "Himachal Pradesh", "Shivamogga": "Karnataka",
+    "Shivpuri": "Madhya Pradesh", "Shirdi": "Maharashtra", "Sikar": "Rajasthan",
+    "Silchar": "Assam", "Siliguri": "West Bengal", "Singrauli": "Madhya Pradesh",
+    "Sirsa": "Haryana", "Sitamarhi": "Bihar", "Sitapur": "Uttar Pradesh",
+    "Solan": "Himachal Pradesh", "Solapur": "Maharashtra", "Sonipat": "Haryana",
+    "Srikakulam": "Andhra Pradesh", "Srinagar": "Jammu and Kashmir", "Surat": "Gujarat",
+    "Surendranagar": "Gujarat", "Tanjore": "Tamil Nadu", "Tezpur": "Assam",
+    "Thalassery": "Kerala", "Thanjavur": "Tamil Nadu", "Thekkady": "Kerala",
+    "Thiruvalla": "Kerala", "Thiruvananthapuram": "Kerala", "Thoothukudi": "Tamil Nadu",
+    "Thrissur": "Kerala", "Tinsukia": "Assam", "Tirunelveli": "Tamil Nadu",
+    "Tirupati": "Andhra Pradesh", "Tirupur": "Tamil Nadu", "Tiruvannamalai": "Tamil Nadu",
+    "Trichy": "Tamil Nadu", "Tumkur": "Karnataka", "Udaipur": "Rajasthan",
+    "Udupi": "Karnataka", "Ujjain": "Madhya Pradesh", "Ulhasnagar": "Maharashtra",
+    "Umaria": "Madhya Pradesh", "Una": "Himachal Pradesh", "Valsad": "Gujarat",
+    "Vapi": "Gujarat", "Varanasi": "Uttar Pradesh", "Vellore": "Tamil Nadu",
+    "Vidisha": "Madhya Pradesh", "Vijayawada": "Andhra Pradesh", "Villupuram": "Tamil Nadu",
+    "Visakhapatnam": "Andhra Pradesh", "Vizianagaram": "Andhra Pradesh", "Vrindavan": "Uttar Pradesh",
+    "Wardha": "Maharashtra", "Wayanad": "Kerala", "Yamunanagar": "Haryana",
+    "Yavatmal": "Maharashtra", "Zirakpur": "Punjab", "Delhi": "Delhi",
+    "Delhi_Transit": "Delhi",
+    # Additional 70 locations
+    "Balugaon": "Odisha", "Banjar": "Himachal Pradesh", "Barpeta": "Assam",
+    "Bawal": "Haryana", "Behrampur": "Odisha", "Berhampore": "West Bengal",
+    "Bhadra": "Rajasthan", "Bijainagar": "Rajasthan", "Buldhana": "Maharashtra",
+    "Charkhi-Dadri": "Haryana", "Chittoor": "Andhra Pradesh", "Coorg": "Karnataka",
+    "Courtallam": "Tamil Nadu", "Degana": "Rajasthan", "Ernakulam": "Kerala",
+    "Hubli-Dharwad": "Karnataka", "Islampur": "West Bengal", "Kaimukhiya": "Uttar Pradesh",
+    "Kalimpong": "West Bengal", "Karimnagar": "Telangana", "Karjat": "Maharashtra",
+    "Karwar": "Karnataka", "Kasauli": "Himachal Pradesh", "Kaziranga": "Assam",
+    "Keonjhar": "Odisha", "Khajuraho": "Madhya Pradesh", "Kharar": "Punjab",
+    "Koderma": "Jharkhand", "Kovalam": "Kerala", "Lansdowne": "Uttarakhand",
+    "Latagudi": "West Bengal", "Lonavala": "Maharashtra", "Mahud": "Maharashtra",
+    "Mandarmoni": "West Bengal", "Manesar": "Haryana", "Mcleod-Ganj": "Himachal Pradesh",
+    "Munnar": "Kerala", "Namakkal": "Tamil Nadu", "Narnaul": "Haryana",
+    "Navi_Mumbai": "Maharashtra", "Nawada": "Bihar", "Orchha": "Madhya Pradesh",
+    "Pahalgam": "Jammu and Kashmir", "Palampur": "Himachal Pradesh", "Palani": "Tamil Nadu",
+    "Pallu": "Rajasthan", "Pathanamthitta": "Kerala", "Patnitop": "Jammu and Kashmir",
+    "Port-Blair": "Andaman and Nicobar Islands", "Pushkar": "Rajasthan", "Raebareily": "Uttar Pradesh",
+    "Rajgir": "Bihar", "Rajpura": "Punjab", "Ranjangaon": "Maharashtra",
+    "Ranthambore": "Rajasthan", "Rudrapur": "Uttarakhand", "Sibsagar": "Assam",
+    "Sillery-Gaon": "West Bengal", "Sirhind": "Punjab", "Sonbhadra": "Uttar Pradesh",
+    "Songadh": "Gujarat", "Srinagar-Uttarakhand": "Uttarakhand", "Tajpur": "West Bengal",
+    "Tenali": "Andhra Pradesh", "Tijara": "Rajasthan", "Tiruppur": "Tamil Nadu",
+    "Trivandrum": "Kerala", "Udupi-Manipal": "Karnataka", "Vadodara": "Gujarat",
+    "Varkala": "Kerala"
+}
+
+
+def extract_address_and_pure_name(raw_name, loc):
+    """
+    Extract pure hotel name and reconstruct comprehensive address using dataset fields.
+    1. Extracts prepositional landmarks (Near, Opposite, Opp, Behind, Beside, Adjacent to, etc.)
+    2. Extracts comma-separated area/locality suffixes
+    3. Handles special transit hubs (e.g. Delhi_Transit -> Near IGI Airport, Mahipalpur)
+    4. Associates location with Indian State
+    5. Applies format_address_for_display to adhere strictly to the City Duplication Rule.
+    """
+    raw_name_clean = str(raw_name).strip()
+    loc_clean = str(loc).strip() if loc else ""
+    city_display = "Delhi (Transit)" if loc_clean == "Delhi_Transit" else loc_clean.replace("_", " ")
+    state = CITY_STATE_MAP.get(loc_clean, "")
+
+    # 1. Prepositional landmarks
+    prep_pattern = r'^(.*?)\s*(?:,\s*)?\b(Near|Opposite|Opp\.?|Behind|Beside|Adjacent to|Adjacent|Close to|Next to|Facing|Towards|At|Off)\s+(.+)$'
+    m = re.search(prep_pattern, raw_name_clean, re.IGNORECASE)
+    if m:
+        pure_name = m.group(1).rstrip(', ').strip()
+        landmark = (m.group(2) + ' ' + m.group(3)).rstrip('.').strip()
+        raw_address = f"{landmark}, {city_display}, {state}" if state else f"{landmark}, {city_display}"
+        display_address = format_address_for_display(raw_address, city_display, loc_clean)
+        return pure_name, raw_address, display_address
+
+    # 2. Delhi_Transit airport transit hub
+    if loc_clean == "Delhi_Transit":
+        pure_name = raw_name_clean.rstrip(',').strip()
+        raw_address = "Near IGI Airport, Mahipalpur, Delhi"
+        display_address = format_address_for_display(raw_address, city_display, loc_clean)
+        return pure_name, raw_address, display_address
+
+    # 3. Comma-separated locality suffix (e.g. 'OYO Townhouse 407 Legacy, Civil Line.')
+    comma_pattern = r'^(.*?)\s*,\s*([^,]+)$'
+    m_comma = re.search(comma_pattern, raw_name_clean)
+    if m_comma and len(m_comma.group(2).strip()) >= 3:
+        locality = m_comma.group(2).rstrip('.').strip()
+        pure_name = m_comma.group(1).rstrip(', ').strip()
+        raw_address = f"{locality}, {city_display}, {state}" if state else f"{locality}, {city_display}"
+        display_address = format_address_for_display(raw_address, city_display, loc_clean)
+        return pure_name, raw_address, display_address
+
+    # 4. Standard hotel with verified location and state in India
+    pure_name = raw_name_clean.rstrip(',').strip()
+    if loc_clean and state:
+        raw_address = f"{city_display}, {state}"
+        display_address = format_address_for_display(raw_address, city_display, loc_clean)
+        return pure_name, raw_address, display_address
+    elif loc_clean:
+        raw_address = f"{city_display}"
+        display_address = format_address_for_display(raw_address, city_display, loc_clean)
+        return pure_name, raw_address, display_address
+    else:
+        return pure_name, "Address not available", "Address not available"
+
+
 def build_hotel_display_and_address_lookup(df):
     """
     Build in-memory lookup from Hotel_ID -> {
         'name': pure hotel name only (without landmark/address appended),
-        'raw_address': complete address including city/landmark,
+        'raw_address': complete address including landmark, city, and state,
         'address': display address with duplicate city removed,
         'city': human-readable city name
     }
@@ -137,24 +369,13 @@ def build_hotel_display_and_address_lookup(df):
     - City / Location is kept separate.
     """
     lookup = {}
-    pattern = r'^(.*?)\s*(?:,\s*)?\b(Near|Opposite|Opp\.?|Behind|Beside)\s+(.+)$'
     for _, row in df.iterrows():
         hid = int(row["Hotel_ID"])
         raw_name = str(row["Hotel_Name"]).strip()
         loc = str(row["Location"]).strip()
         city_display = "Delhi (Transit)" if loc == "Delhi_Transit" else loc.replace("_", " ")
 
-        # Separate landmark info from pure hotel name if present
-        m = re.search(pattern, raw_name, re.IGNORECASE)
-        if m:
-            pure_name = m.group(1).rstrip(', ').strip()
-            landmark = (m.group(2) + ' ' + m.group(3)).rstrip('.').strip()
-            raw_address = f"{landmark}, {city_display}"
-            display_address = format_address_for_display(raw_address, city_display, loc)
-        else:
-            pure_name = raw_name.rstrip(',').strip()
-            raw_address = "Address not available"
-            display_address = "Address not available"
+        pure_name, raw_address, display_address = extract_address_and_pure_name(raw_name, loc)
 
         lookup[hid] = {
             "name": pure_name,
@@ -163,6 +384,7 @@ def build_hotel_display_and_address_lookup(df):
             "city": city_display
         }
     return lookup
+
 
 HOTEL_DISPLAY_LOOKUP = build_hotel_display_and_address_lookup(hotel_data)
 HOTEL_ADDRESS_LOOKUP = {hid: info["address"] for hid, info in HOTEL_DISPLAY_LOOKUP.items()}
