@@ -916,6 +916,58 @@ function showSearchView() {
     }
 }
 
+function resetSearchFlow() {
+    // Hide results and message banners
+    const resultsWrapper = document.getElementById("results-wrapper");
+    const fallbackBanner = document.getElementById("fallback-banner");
+    const emptyState = document.getElementById("empty-state");
+    const errorState = document.getElementById("error-state");
+
+    if (resultsWrapper) resultsWrapper.classList.add("hidden");
+    if (fallbackBanner) fallbackBanner.classList.add("hidden");
+    if (emptyState) emptyState.classList.add("hidden");
+    if (errorState) errorState.classList.add("hidden");
+    updateTopBackButton(false);
+
+    // Clear saved session storage
+    try {
+        sessionStorage.removeItem("hotel_recommendation_search_state");
+    } catch (e) {}
+
+    // Reset location & city input
+    clearSelectedCity();
+
+    // Reset budget input
+    const budgetInput = document.getElementById("budget");
+    if (budgetInput) budgetInput.value = "";
+
+    // Reset rating select
+    const minRatingSelect = document.getElementById("min_rating");
+    if (minRatingSelect) minRatingSelect.value = "any";
+
+    // Reset preference chips
+    clearAllPreferences();
+    currentPreference = "";
+    const prefInput = document.getElementById("preference");
+    if (prefInput) prefInput.value = "";
+
+    // Reset current hotels array
+    currentHotels = [];
+
+    // Reset URL hash
+    if (window.location.hash === "#results") {
+        try {
+            history.pushState(null, "", window.location.pathname);
+        } catch (e) {}
+    }
+
+    // Scroll to the search form
+    const searchCard = document.querySelector(".search-card");
+    if (searchCard) {
+        searchCard.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+}
+
 // Popstate listener for browser back/forward navigation
 window.addEventListener("popstate", function(event) {
     if (event.state && event.state.step === "results") {

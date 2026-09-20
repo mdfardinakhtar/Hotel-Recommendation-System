@@ -237,6 +237,13 @@ body {
     transform: translateX(-2px);
 }
 
+.results-nav-buttons {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
 .results-title-group {
     display: flex;
     align-items: center;
@@ -2297,13 +2304,22 @@ body {
         flex-wrap: wrap;
         gap: 10px;
     }
-    .top-back-btn {
+    .nav-actions {
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+    .top-back-btn,
+    .nav-back-btn,
+    .results-back-btn {
         padding: 5px 10px;
         font-size: 0.8rem;
     }
     .results-title-group {
         width: 100%;
-        justify-content: space-between;
+        gap: 8px;
+    }
+    .results-nav-buttons {
+        gap: 6px;
     }
 }
 

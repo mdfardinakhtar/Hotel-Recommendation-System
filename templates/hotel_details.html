@@ -28,13 +28,20 @@
             </div>
         </div>
         <div class="nav-actions">
-            <button type="button" class="btn-secondary top-back-btn" onclick="handleGoBack()" title="Go back to previous page" aria-label="Go back">
+            <button type="button" class="btn-secondary top-back-btn" onclick="handleGoBack()" title="Go back one step" aria-label="Go back">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="19" y1="12" x2="5" y2="12"></line>
                     <polyline points="12 19 5 12 12 5"></polyline>
                 </svg>
                 <span>Back</span>
             </button>
+            <a href="/" class="btn-secondary nav-back-btn" onclick="resetSearchSession()" title="Return to Search and start new search" aria-label="Back to Search">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+                <span>Back to Search</span>
+            </a>
         </div>
     </div>
 </header>
@@ -43,7 +50,7 @@
 
     <!-- Breadcrumb -->
     <nav class="breadcrumb">
-        <a href="javascript:void(0)" onclick="handleGoBack()">Home / Results</a>
+        <a href="/">Home</a>
         <span>&rsaquo;</span>
         <span class="current">{{ hotel.city or (hotel.location.replace('_', ' ') if hotel.location else '') }}</span>
         <span>&rsaquo;</span>
@@ -452,13 +459,27 @@
 </footer>
 
 <script>
+function resetSearchSession() {
+    try {
+        sessionStorage.removeItem("hotel_recommendation_search_state");
+    } catch (e) {}
+}
+
 function handleGoBack() {
     if (document.referrer && (document.referrer.indexOf(window.location.host) !== -1 || document.referrer.startsWith(window.location.origin))) {
         window.history.back();
-    } else if (window.history.length > 1) {
+    } else if (window.history.length > 1 && window.history.state) {
         window.history.back();
     } else {
-        window.location.href = "/";
+        var hasState = false;
+        try {
+            hasState = !!sessionStorage.getItem("hotel_recommendation_search_state");
+        } catch (e) {}
+        if (hasState) {
+            window.location.href = "/#results";
+        } else {
+            window.location.href = "/";
+        }
     }
 }
 </script>

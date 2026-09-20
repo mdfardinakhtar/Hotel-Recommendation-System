@@ -251,13 +251,22 @@
         <!-- Results Bar (Summary + Sort Controls) -->
         <div class="results-header-bar">
             <div class="results-title-group">
-                <button type="button" class="btn-secondary results-back-btn" onclick="handleGoBack()" title="Go back to search" aria-label="Go back to search">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="19" y1="12" x2="5" y2="12"></line>
-                        <polyline points="12 19 5 12 12 5"></polyline>
-                    </svg>
-                    <span>Back to Search</span>
-                </button>
+                <div class="results-nav-buttons">
+                    <button type="button" class="btn-secondary top-back-btn" onclick="handleGoBack()" title="Go back one step" aria-label="Go back">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="19" y1="12" x2="5" y2="12"></line>
+                            <polyline points="12 19 5 12 12 5"></polyline>
+                        </svg>
+                        <span>Back</span>
+                    </button>
+                    <button type="button" class="btn-secondary results-back-btn" onclick="resetSearchFlow()" title="Back to Search (Reset search flow)" aria-label="Back to Search">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="19" y1="12" x2="5" y2="12"></line>
+                            <polyline points="12 19 5 12 12 5"></polyline>
+                        </svg>
+                        <span>Back to Search</span>
+                    </button>
+                </div>
                 <div>
                     <h3 id="results-count-title">Recommended Hotels</h3>
                     <p id="detected-aspects-text" class="aspects-summary"></p>
