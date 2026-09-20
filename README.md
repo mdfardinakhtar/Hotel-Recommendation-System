@@ -28,15 +28,15 @@ An intelligent Indian hotel recommendation platform powered by Natural Language 
 
 ## 🧪 Running Automated Tests
 
-Run the automated test suites to validate recommendation quality, exact address integrity, city autocomplete, and booking lifecycle:
+Run the automated test suites to validate recommendation quality, exact address integrity, city autocomplete, and external booking platform discovery:
 ```bash
-# 1. Test complete hotel booking flow (17 scenarios)
-python test_booking.py
+# 1. Test external booking platform recommendations & search queries (6 tests)
+python test_booking_platforms.py
 
 # 2. Test hotel address accuracy & duplicate city removal
 python test_hotel_address.py
 
-# 3. Test recommendation quality & NLP scoring
+# 3. Test recommendation quality & NLP scoring formula
 python test_recommendations.py
 
 # 4. Test searchable destination city autocomplete
@@ -45,27 +45,30 @@ python test_city_autocomplete.py
 
 ---
 
-## 🏨 Hotel Discovery & Booking Architecture
+## 🏨 Recommendation & External Booking Platform Discovery Architecture
+
+The application is strictly designed as an **intelligent recommendation and discovery platform**:
 
 1. **Intelligent Discovery:** Users search by city, budget, minimum rating, and text preferences (e.g. *"quiet room near metro"*).
-2. **Authoritative Address Hierarchy:**
+2. **Authoritative 3-Tier Address Hierarchy:**
    - **Hotel Name:** Name only
    - **Hotel Address:** Exact street, locality, landmark, state, and PIN code from dataset (with duplicate city safely removed)
    - **City / Location:** Independent destination city indicator
-3. **One-Click Reservation Workflow:**
-   - `[Book Now]` buttons on each recommendation card and hotel profile
-   - Responsive 2-column reservation page with real-time night & price recalculation
-   - Server-side authoritative price verification ($Total = Price \times Nights \times Rooms$)
-   - Collision-resistant sequential Booking IDs (`BK` + YYYYMMDD + 4-digit sequence)
-   - Persistent SQLite database storage in `booking.db`
-   - Complete booking confirmation voucher with print/PDF support
-   - "My Bookings" lookup dashboard with easy cancellation support
+3. **External Booking Platform Integration:**
+   - Instead of hosting an internal booking database or collecting user payment credentials, the system discovers and links to the 4 leading travel platforms:
+     - **MakeMyTrip** (`https://www.makemytrip.com/hotels/hotel-listing/?searchText=...`)
+     - **Goibibo** (`https://www.goibibo.com/hotels/find-hotels-in-any/?searchText=...`)
+     - **Booking.com** (`https://www.booking.com/searchresults.html?ss=...`)
+     - **Agoda** (`https://www.agoda.com/search?text=...`)
+   - Each platform link is prefilled with a query combining the hotel name, destination city, and landmark.
+   - All links open safely in a new browser tab (`target="_blank" rel="noopener noreferrer"`).
+   - Clear disclosure notes ensure users understand bookings are completed directly on the external partner's website.
 
 ---
 
 ## 🧠 Recommendation Flow & Scoring Formula
 
-User Preferences $\rightarrow$ TF-IDF Similarity + Aspect Match + Smoothed Sentiment + Smoothed Rating $\rightarrow$ Ranking
+$$\text{User Preferences} \rightarrow \text{TF-IDF Similarity} + \text{Aspect Match} + \text{Smoothed Sentiment} + \text{Smoothed Rating} \rightarrow \text{Ranking}$$
 
 $$\text{Recommendation Score} = 0.35 \times \text{Similarity} + 0.25 \times \text{Aspect Match} + 0.20 \times \text{Smoothed Sentiment} + 0.20 \times \text{Rating Score}$$
 
@@ -80,7 +83,7 @@ $$\text{Recommendation Score} = 0.35 \times \text{Similarity} + 0.25 \times \tex
 ## 📡 API Endpoints
 
 ### 1. `POST /recommend`
-Generates personalized hotel recommendations based on constraints and free-form preference text.
+Generates personalized hotel recommendations based on constraints and free-form preference text. Returns hotel metadata along with external booking platform search URLs.
 
 **Example Request:**
 ```json
@@ -93,26 +96,10 @@ Generates personalized hotel recommendations based on constraints and free-form 
 ```
 
 ### 2. `GET /hotel/<int:hotel_id>`
-Detailed hotel profile page showing exact dataset address, aspect-wise feedback bars, ML sentiment breakdown, verified "Why Recommended" reasons, and paginated customer reviews.
+Detailed hotel profile page showing exact dataset address, aspect-wise feedback bars, ML sentiment breakdown, verified "Why Recommended" reasons, external booking options with pre-filled platform search links, and paginated customer reviews.
 
-### 3. `GET /book/<int:hotel_id>` & `POST /book/<int:hotel_id>`
-Hotel booking form and submission endpoint. Supports both standard HTML form POST (with redirect) and JSON API requests (returns 201 with booking reference).
-
-### 4. `GET /booking/confirmation/<booking_id>`
-Displays the official booking voucher and reservation summary.
-
-### 5. `GET /my-bookings`
-Booking lookup portal allowing guests to enter their Booking Reference ID to check itinerary details, download vouchers, or cancel reservations.
-
-### 6. `POST /booking/cancel/<booking_id>`
-Cancels a reservation in the database without deleting historical records.
-
-### 7. `GET /api/hotel/<int:hotel_id>/pricing`
-Authoritative per-night pricing lookup for dynamic client calculation.
-
-### 8. `GET /api/hotel/<int:hotel_id>/reviews`
+### 3. `GET /api/hotel/<int:hotel_id>/reviews`
 REST endpoint returning paginated customer reviews with sentiment filtering (`?page=1&per_page=10&sentiment=positive`).
 
-### 9. `GET /health`
-System health check returning indexed review count, hotel count, and covered Indian locations.
-
+### 4. `GET /health`
+System health check returning indexed review count (192,015), hotel count (2,775), and covered Indian locations (251).

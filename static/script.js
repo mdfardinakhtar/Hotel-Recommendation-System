@@ -617,6 +617,34 @@ function renderHotelCards(hotels) {
         // Details URL with context parameters
         const detailsUrl = `/hotel/${hotel.hotel_id}?score=${hotel.score}&similarity=${hotel.similarity}&aspect_match=${hotel.aspect_match}&pref=${encodeURIComponent(currentPreference)}`;
 
+        // External booking platform pill options
+        let platformsHtml = "";
+        if (hotel.booking_platforms && hotel.booking_platforms.length > 0) {
+            const pills = hotel.booking_platforms.map(p => `
+                <a href="${escapeAttr(p.url)}" 
+                   target="_blank" 
+                   rel="noopener noreferrer" 
+                   class="card-platform-pill" 
+                   title="Search for ${escapeAttr(hotel.name)} on ${escapeAttr(p.name)}">
+                    <span class="pill-dot" style="background:${p.bg_color || '#2563eb'}"></span>
+                    <span>${escapeHtml(p.name)}</span>
+                    <span class="pill-arrow">&nearr;</span>
+                </a>
+            `).join("");
+
+            platformsHtml = `
+                <div class="card-booking-options">
+                    <div class="card-booking-header">
+                        <span class="booking-options-label">Where to Book:</span>
+                        <span class="external-tag">Opens in new tab</span>
+                    </div>
+                    <div class="card-platform-pills">
+                        ${pills}
+                    </div>
+                </div>
+            `;
+        }
+
         card.innerHTML = `
             <div>
                 <div class="card-top-row">
@@ -657,20 +685,13 @@ function renderHotelCards(hotels) {
                         <ul>${reasonsHtml}</ul>
                     </div>
                 </div>
+
+                ${platformsHtml}
             </div>
 
             <div class="card-footer-action">
-                <a href="/book/${hotel.hotel_id}" class="card-book-btn">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                        <line x1="16" y1="2" x2="16" y2="6"></line>
-                        <line x1="8" y1="2" x2="8" y2="6"></line>
-                        <line x1="3" y1="10" x2="21" y2="10"></line>
-                    </svg>
-                    <span>Book Now</span>
-                </a>
                 <a href="${detailsUrl}" class="card-action-btn">
-                    <span>View Details &rarr;</span>
+                    <span>View Hotel Details &amp; Sentiment Analysis &rarr;</span>
                 </a>
             </div>
         `;
