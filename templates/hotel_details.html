@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ hotel.name }} | Hotel Details & Review Analysis</title>
+    <link rel="icon" type="image/png" href="/static/logo.png">
     <link rel="stylesheet" href="/static/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,17 +16,13 @@
 <header class="navbar">
     <div class="container nav-content">
         <div class="brand">
-            <div class="brand-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M3 21h18M3 7v14M21 7v14M6 11h2M6 15h2M10 11h2M10 15h2M14 11h2M14 15h2M18 11h2M18 15h2M9 3l3-2 3 2v4H9z"/>
-                </svg>
-            </div>
-            <div>
-                <a href="/" class="nav-brand-link">
+            <a href="/" class="nav-brand-link" style="display: flex; align-items: center; gap: 14px; text-decoration: none;">
+                <img src="/static/logo.png" alt="Indian Hotel Recommendation System Logo" class="brand-logo" width="44" height="44">
+                <div>
                     <h1 class="nav-title">Indian Hotel Recommendation System</h1>
-                </a>
-                <p class="nav-subtitle">Detailed Hotel Profile, Sentiment Insights & Aspect-Level Review Breakdown</p>
-            </div>
+                    <p class="nav-subtitle">Detailed Hotel Profile, Sentiment Insights & Aspect-Level Review Breakdown</p>
+                </div>
+            </a>
         </div>
         <div class="nav-actions">
             <button type="button" class="btn-secondary top-back-btn" onclick="handleGoBack()" title="Go back one step" aria-label="Go back">

@@ -103,6 +103,17 @@ body {
     box-shadow: 0 4px 10px rgba(29, 78, 216, 0.3);
 }
 
+.brand-logo {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-md);
+    display: block;
+    flex-shrink: 0;
+    object-fit: contain;
+    aspect-ratio: 1 / 1;
+    box-shadow: 0 4px 10px rgba(29, 78, 216, 0.25);
+}
+
 .nav-brand-link {
     text-decoration: none;
     color: inherit;
@@ -2303,6 +2314,10 @@ body {
     .nav-content {
         flex-wrap: wrap;
         gap: 10px;
+    }
+    .brand-logo {
+        width: 38px;
+        height: 38px;
     }
     .nav-actions {
         gap: 6px;
