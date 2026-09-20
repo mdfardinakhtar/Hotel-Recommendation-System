@@ -21,22 +21,23 @@ class TestBookingPlatformArchitecture(unittest.TestCase):
         cls.client = app.test_client()
 
     def test_booking_platforms_config(self):
-        """Verify that the 4 specified platforms are configured correctly."""
+        """Verify that the 5 specified platforms are configured correctly."""
         platform_ids = [p["id"] for p in BOOKING_PLATFORMS]
         self.assertIn("makemytrip", platform_ids)
         self.assertIn("goibibo", platform_ids)
         self.assertIn("booking_com", platform_ids)
         self.assertIn("agoda", platform_ids)
-        self.assertEqual(len(BOOKING_PLATFORMS), 4)
+        self.assertIn("oyo", platform_ids)
+        self.assertEqual(len(BOOKING_PLATFORMS), 5)
 
     def test_get_booking_platform_links_construction(self):
-        """Verify query construction and URL encoding for external search links."""
+        """Verify query construction and URL encoding for external search links across all 5 platforms."""
         hotel_name = "Super OYO Townhouse 123"
         city = "Bangalore"
         address = "12th Main Road, Indiranagar, Karnataka 560038"
 
         links = get_booking_platform_links(hotel_name, city, address)
-        self.assertEqual(len(links), 4)
+        self.assertEqual(len(links), 5)
 
         for item in links:
             self.assertIn("id", item)
@@ -68,6 +69,11 @@ class TestBookingPlatformArchitecture(unittest.TestCase):
         agoda = next(x for x in links if x["id"] == "agoda")
         self.assertTrue(agoda["url"].startswith("https://www.agoda.com/search?text="))
         self.assertEqual(agoda["button_text"], "Search on Agoda")
+
+        # Check OYO
+        oyo = next(x for x in links if x["id"] == "oyo")
+        self.assertTrue(oyo["url"].startswith("https://www.oyorooms.com/search?location="))
+        self.assertEqual(oyo["button_text"], "Search on OYO")
 
     def test_internal_booking_routes_removed(self):
         """Verify that all previous internal booking and reservation endpoints return 404."""
@@ -107,7 +113,7 @@ class TestBookingPlatformArchitecture(unittest.TestCase):
 
         first_hotel = data["hotels"][0]
         self.assertIn("booking_platforms", first_hotel)
-        self.assertEqual(len(first_hotel["booking_platforms"]), 4)
+        self.assertEqual(len(first_hotel["booking_platforms"]), 5)
 
         # Check 3-tier address fields intact
         self.assertIn("name", first_hotel)
@@ -116,30 +122,41 @@ class TestBookingPlatformArchitecture(unittest.TestCase):
         self.assertIn("score", first_hotel)
 
     def test_hotel_details_page_rendering(self):
-        """Verify /hotel/<id> renders booking options section, external links, and disclosures."""
+        """Verify /hotel/<id> renders Where can I find this hotel section, 5 external links, and disclosures."""
         # Pick first hotel ID from lookup
         test_hid = next(iter(HOTEL_DISPLAY_LOOKUP.keys()))
         res = self.client.get(f"/hotel/{test_hid}")
         self.assertEqual(res.status_code, 200)
         html = res.get_data(as_text=True)
 
-        # Must have booking options section
+        # Must have booking options section with exact heading
         self.assertIn('id="booking-options"', html)
-        self.assertIn('Popular Booking Platforms (Where to Book)', html)
+        self.assertIn('Where can I find this hotel?', html)
 
-        # Must have all 4 platforms
+        # Must have all 5 platforms
         self.assertIn("MakeMyTrip", html)
         self.assertIn("Goibibo", html)
         self.assertIn("Booking.com", html)
         self.assertIn("Agoda", html)
+        self.assertIn("OYO", html)
+
+        # Must have platform button texts
+        self.assertIn("Search on MakeMyTrip", html)
+        self.assertIn("Search on Goibibo", html)
+        self.assertIn("Search on Booking.com", html)
+        self.assertIn("Search on Agoda", html)
+        self.assertIn("Search on OYO", html)
 
         # Must open in new tab with security attributes
         self.assertIn('target="_blank"', html)
         self.assertIn('rel="noopener noreferrer"', html)
 
-        # Must have transparency disclosure
-        self.assertIn("Booking Transparency", html)
-        self.assertIn("completed entirely on the selected external booking platform", html)
+        # Must have required disclaimers verbatim
+        self.assertIn("Your booking will be completed on the selected booking platform.", html)
+        self.assertIn("Prices and availability may vary on external booking platforms.", html)
+
+        # Must have required sentiment note verbatim
+        self.assertIn("Hotel rating is the customer's numerical rating. ML sentiment is the sentiment predicted from the review text.", html)
 
         # Must NOT have internal booking button or links
         self.assertNotIn('href="/book/', html)

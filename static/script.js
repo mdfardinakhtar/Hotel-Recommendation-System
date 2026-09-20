@@ -597,12 +597,13 @@ function renderHotelCards(hotels) {
             ? `₹${Number(hotel.price).toLocaleString("en-IN")}` 
             : "Price on Request";
 
-        const ratingText = hotel.rating !== null ? `${hotel.rating} / 5` : "N/A";
-        const sentimentText = hotel.sentiment !== null ? `${hotel.sentiment}% Positive` : "N/A";
-        const aspectMatchText = `${hotel.aspect_match}% Aspect Match`;
-        const similarityText = `${hotel.similarity}% Similarity`;
-        const scoreText = `${hotel.score}%`;
+        const ratingVal = hotel.rating !== null ? `${hotel.rating}` : "N/A";
+        const sentimentVal = hotel.sentiment !== null ? `${hotel.sentiment}%` : "N/A";
+        const aspectMatchVal = `${hotel.aspect_match}%`;
+        const similarityVal = `${hotel.similarity}%`;
+        const scoreVal = `${hotel.score}%`;
         const displayAddress = formatAddressForDisplay(hotel.address, hotel.city, hotel.location);
+        const displayCity = hotel.city || (hotel.location === 'Delhi_Transit' ? 'Delhi' : hotel.location.replace(/_/g, ' '));
 
         // Reasons HTML list
         let reasonsHtml = "";
@@ -617,83 +618,110 @@ function renderHotelCards(hotels) {
         // Details URL with context parameters
         const detailsUrl = `/hotel/${hotel.hotel_id}?score=${hotel.score}&similarity=${hotel.similarity}&aspect_match=${hotel.aspect_match}&pref=${encodeURIComponent(currentPreference)}`;
 
-        // External booking platform pill options
+        // External booking platform buttons (5 platforms)
         let platformsHtml = "";
         if (hotel.booking_platforms && hotel.booking_platforms.length > 0) {
-            const pills = hotel.booking_platforms.map(p => `
+            const buttonsHtml = hotel.booking_platforms.map(p => `
                 <a href="${escapeAttr(p.url)}" 
                    target="_blank" 
                    rel="noopener noreferrer" 
-                   class="card-platform-pill" 
+                   class="card-platform-search-btn platform-btn-${escapeAttr(p.id)}" 
                    title="Search for ${escapeAttr(hotel.name)} on ${escapeAttr(p.name)}">
-                    <span class="pill-dot" style="background:${p.bg_color || '#2563eb'}"></span>
-                    <span>${escapeHtml(p.name)}</span>
-                    <span class="pill-arrow">&nearr;</span>
+                    <span class="platform-dot" style="background:${p.bg_color || '#2563eb'}"></span>
+                    <span class="platform-btn-name">${escapeHtml(p.button_text || `Search on ${p.name}`)}</span>
+                    <svg class="platform-ext-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                        <polyline points="15 3 21 3 21 9"></polyline>
+                        <line x1="10" y1="14" x2="21" y2="3"></line>
+                    </svg>
                 </a>
             `).join("");
 
             platformsHtml = `
-                <div class="card-booking-options">
-                    <div class="card-booking-header">
-                        <span class="booking-options-label">Where to Book:</span>
-                        <span class="external-tag">Opens in new tab</span>
+                <div class="card-booking-discovery">
+                    <div class="card-discovery-header">
+                        <h4 class="card-discovery-title">Where can I find this hotel?</h4>
+                        <span class="card-discovery-badge">External Search</span>
                     </div>
-                    <div class="card-platform-pills">
-                        ${pills}
+                    <div class="card-platform-btn-grid">
+                        ${buttonsHtml}
+                    </div>
+                    <div class="card-discovery-disclaimers">
+                        <p class="card-disclaimer-item">Your booking will be completed on the selected booking platform.</p>
+                        <p class="card-disclaimer-item">Prices and availability may vary on external booking platforms.</p>
                     </div>
                 </div>
             `;
         }
 
         card.innerHTML = `
-            <div>
-                <div class="card-top-row">
-                    <div class="hotel-title-group">
-                        <h3 class="hotel-name">${escapeHtml(hotel.name)}</h3>
-                        <div class="hotel-address">
-                            <span class="addr-pin">📍</span>
-                            <span class="addr-text">${escapeHtml(displayAddress)}</span>
-                        </div>
-                        <div class="hotel-location">${escapeHtml(hotel.city || (hotel.location === 'Delhi_Transit' ? 'Delhi (Transit)' : hotel.location.replace(/_/g, ' ')))}</div>
-                    </div>
-                    <span class="score-badge" title="Combined recommendation score">Score: ${scoreText}</span>
-                </div>
-
-                <div class="card-metric-row">
-                    <div class="card-price-box">
-                        <span class="card-price">${priceText}</span>
-                        <span class="card-price-sub">/ night</span>
-                    </div>
-                    <div class="card-rating-box">
-                        <span>★</span>
-                        <span>${ratingText}</span>
-                    </div>
-                </div>
-
-                <div class="card-tags-row">
-                    <span class="tag-badge tag-sentiment">✓ ${sentimentText}</span>
-                    <span class="tag-badge tag-aspect">✓ ${aspectMatchText}</span>
-                    <span class="tag-badge tag-reviews">${hotel.reviews} reviews</span>
-                </div>
-
-                <div class="why-accordion">
-                    <div class="why-toggle" onclick="toggleWhyAccordion(${idx})">
-                        <span>Why recommended?</span>
-                        <span id="why-icon-${idx}">▼</span>
-                    </div>
-                    <div id="why-body-${idx}" class="why-body hidden">
-                        <ul>${reasonsHtml}</ul>
-                    </div>
-                </div>
-
-                ${platformsHtml}
+            <!-- 1. HOTEL NAME -->
+            <div class="card-header-section">
+                <h3 class="hotel-name">${escapeHtml(hotel.name)}</h3>
             </div>
 
-            <div class="card-footer-action">
-                <a href="${detailsUrl}" class="card-action-btn">
-                    <span>View Hotel Details &amp; Sentiment Analysis &rarr;</span>
+            <!-- 2. FULL HOTEL ADDRESS -->
+            <div class="hotel-address">
+                <span class="addr-pin">📍</span>
+                <span class="addr-text">${escapeHtml(displayAddress)}</span>
+            </div>
+
+            <!-- 3. CITY / LOCATION -->
+            <div class="hotel-location">${escapeHtml(displayCity)}</div>
+
+            <!-- 4. PRICE -->
+            <div class="card-price-row">
+                <span class="card-price">${priceText}</span>
+                <span class="card-price-sub">/ night</span>
+            </div>
+
+            <!-- 5. RATING & REVIEW COUNT -->
+            <div class="card-rating-row">
+                <span class="card-rating-pill">★ ${ratingVal} Rating</span>
+                <span class="card-reviews-count">${hotel.reviews} reviews</span>
+            </div>
+
+            <!-- 6. KEY METRICS: SENTIMENT, PREFERENCE MATCH, ASPECT MATCH, REC SCORE -->
+            <div class="card-metrics-grid">
+                <div class="card-metric-item">
+                    <span class="metric-val text-pos">${sentimentVal} Positive</span>
+                </div>
+                <div class="card-metric-item">
+                    <span class="metric-val text-pref">${similarityVal} Preference Match</span>
+                </div>
+                <div class="card-metric-item">
+                    <span class="metric-val text-aspect">${aspectMatchVal} Aspect Match</span>
+                </div>
+                <div class="card-metric-item metric-score-item">
+                    <span class="metric-label">Score:</span>
+                    <span class="metric-val score-highlight">${scoreVal}</span>
+                </div>
+            </div>
+
+            <!-- 7. WHY RECOMMENDED ACCORDION -->
+            <div class="why-accordion">
+                <div class="why-toggle" onclick="toggleWhyAccordion(${idx})">
+                    <span>Why recommended?</span>
+                    <span id="why-icon-${idx}">▼</span>
+                </div>
+                <div id="why-body-${idx}" class="why-body hidden">
+                    <ul>${reasonsHtml}</ul>
+                </div>
+            </div>
+
+            <!-- 8. VIEW DETAILS BUTTON -->
+            <div class="card-action-primary">
+                <a href="${detailsUrl}" class="btn-view-details">
+                    <span>View Details</span>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
                 </a>
             </div>
+
+            <!-- 9. WHERE CAN I FIND THIS HOTEL? PLATFORM DISCOVERY SECTION -->
+            ${platformsHtml}
         `;
 
         container.appendChild(card);

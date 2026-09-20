@@ -983,91 +983,115 @@ body {
 }
 
 /* Pricing and Rating in Card */
-.card-metric-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    padding: 10px 0;
-    border-top: 1px solid var(--neutral-100);
-    border-bottom: 1px solid var(--neutral-100);
-    margin-bottom: 14px;
+.card-header-section {
+    margin-bottom: 4px;
 }
 
-.card-price-box {
+.card-price-row {
     display: flex;
     align-items: baseline;
     gap: 4px;
+    margin-top: 10px;
+    margin-bottom: 8px;
 }
 
 .card-price {
-    font-size: 1.35rem;
+    font-size: 1.45rem;
     font-weight: 800;
     color: var(--neutral-900);
 }
 
 .card-price-sub {
-    font-size: 0.8rem;
+    font-size: 0.82rem;
     color: var(--neutral-500);
+    font-weight: 500;
 }
 
-.card-rating-box {
+.card-rating-row {
     display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.card-rating-pill {
+    display: inline-flex;
     align-items: center;
     gap: 4px;
     background-color: var(--accent-green-bg);
     color: #065f46;
-    padding: 4px 8px;
+    border: 1px solid #a7f3d0;
+    padding: 3px 8px;
     border-radius: var(--radius-sm);
     font-weight: 700;
-    font-size: 0.85rem;
+    font-size: 0.82rem;
 }
 
-/* Sentiment & Aspects Tags */
-.card-tags-row {
-    display: flex;
-    flex-wrap: wrap;
+.card-reviews-count {
+    font-size: 0.8rem;
+    color: var(--neutral-500);
+    font-weight: 500;
+}
+
+/* 4-Item Key Metrics Grid */
+.card-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
     gap: 6px;
     margin-bottom: 14px;
 }
 
-.tag-badge {
+.card-metric-item {
+    background-color: var(--neutral-50);
+    border: 1px solid var(--neutral-200);
+    border-radius: var(--radius-sm);
+    padding: 5px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     font-size: 0.76rem;
     font-weight: 600;
-    padding: 3px 8px;
-    border-radius: 999px;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
 }
 
-.tag-sentiment {
-    background-color: var(--primary-50);
+.metric-val.text-pos {
+    color: var(--accent-green);
+}
+
+.metric-val.text-pref {
     color: var(--primary-700);
-    border: 1px solid var(--primary-100);
 }
 
-.tag-aspect {
-    background-color: var(--accent-purple-bg);
+.metric-val.text-aspect {
     color: #6b21a8;
-    border: 1px solid #e9d5ff;
 }
 
-.tag-reviews {
-    background-color: var(--neutral-100);
-    color: var(--neutral-600);
+.metric-score-item {
+    background-color: #eff6ff;
+    border-color: #bfdbfe;
+}
+
+.metric-score-item .metric-label {
+    color: var(--primary-700);
+    font-weight: 600;
+}
+
+.score-highlight {
+    color: var(--primary-800);
+    font-weight: 800;
+    font-size: 0.82rem;
 }
 
 /* Expandable Why Recommended Accordion */
 .why-accordion {
     background-color: var(--neutral-50);
     border-radius: var(--radius-md);
-    margin-bottom: 16px;
+    margin-bottom: 14px;
     font-size: 0.82rem;
     border: 1px solid var(--neutral-200);
 }
 
 .why-toggle {
-    padding: 8px 12px;
+    padding: 7px 12px;
     cursor: pointer;
     font-weight: 600;
     color: var(--neutral-700);
@@ -1075,6 +1099,7 @@ body {
     justify-content: space-between;
     align-items: center;
     user-select: none;
+    font-size: 0.8rem;
 }
 
 .why-toggle:hover {
@@ -1096,6 +1121,8 @@ body {
     margin-bottom: 4px;
     display: flex;
     gap: 6px;
+    font-size: 0.8rem;
+    line-height: 1.35;
 }
 
 .why-body li span.check {
@@ -1103,115 +1130,158 @@ body {
     font-weight: 700;
 }
 
-/* Card External Booking Platform Options */
-.card-booking-options {
-    background: var(--neutral-50);
-    border: 1px dashed var(--neutral-300);
-    border-radius: var(--radius-md);
-    padding: 10px 12px;
-    margin-top: 10px;
-    margin-bottom: 6px;
+/* Primary View Details Button */
+.card-action-primary {
+    margin-bottom: 14px;
 }
 
-.card-booking-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-}
-
-.booking-options-label {
-    font-size: 0.74rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--neutral-600);
-}
-
-.external-tag {
-    font-size: 0.70rem;
-    color: var(--neutral-400);
-    font-weight: 500;
-}
-
-.card-platform-pills {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-}
-
-.card-platform-pill {
+.btn-view-details {
+    width: 100%;
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    background: var(--white);
-    color: var(--neutral-800);
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
+    color: var(--white);
+    border: 1px solid var(--primary-700);
+    border-radius: var(--radius-md);
+    padding: 10px 16px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 5px rgba(29, 78, 216, 0.2);
+}
+
+.btn-view-details:hover {
+    background: linear-gradient(135deg, var(--primary-700), var(--primary-800));
+    color: var(--white);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(29, 78, 216, 0.3);
+}
+
+.btn-view-details svg {
+    transition: transform 0.2s ease;
+}
+
+.btn-view-details:hover svg {
+    transform: translateX(3px);
+}
+
+/* "Where can I find this hotel?" Discovery Section */
+.card-booking-discovery {
+    background-color: #f8fafc;
     border: 1px solid var(--neutral-200);
-    border-radius: 6px;
-    padding: 4px 9px;
-    font-size: 0.78rem;
+    border-radius: var(--radius-md);
+    padding: 12px;
+    margin-top: auto;
+}
+
+.card-discovery-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--neutral-200);
+}
+
+.card-discovery-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--neutral-900);
+    margin: 0;
+}
+
+.card-discovery-badge {
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--primary-700);
+    background-color: #eff6ff;
+    border: 1px solid #bfdbfe;
+    padding: 1px 6px;
+    border-radius: 4px;
+}
+
+.card-platform-btn-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.card-platform-search-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: var(--white);
+    color: var(--neutral-800);
+    border: 1.5px solid var(--neutral-200);
+    border-radius: var(--radius-sm);
+    padding: 7px 10px;
+    font-size: 0.8rem;
     font-weight: 600;
     text-decoration: none;
     transition: all 0.15s ease;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
-.card-platform-pill:hover {
-    border-color: var(--primary-400);
-    color: var(--primary-700);
-    background: var(--primary-50);
+.card-platform-search-btn:hover {
+    background-color: #f1f5f9;
+    border-color: var(--neutral-400);
+    color: var(--neutral-900);
     transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.06);
 }
 
-.pill-dot {
-    width: 7px;
-    height: 7px;
+.platform-dot {
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
     flex-shrink: 0;
 }
 
-.pill-arrow {
-    font-size: 0.75rem;
-    color: var(--neutral-400);
-    transition: transform 0.15s ease;
+.platform-btn-name {
+    flex: 1;
+    text-align: left;
 }
 
-.card-platform-pill:hover .pill-arrow {
+.platform-ext-icon {
+    color: var(--neutral-400);
+    flex-shrink: 0;
+    transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.card-platform-search-btn:hover .platform-ext-icon {
     color: var(--primary-600);
     transform: translate(1px, -1px);
 }
 
-/* Card Action Button */
-.card-footer-action {
-    display: flex;
-    align-items: center;
-    margin-top: 14px;
+/* Platform-specific subtle branding accents on hover */
+.platform-btn-makemytrip:hover { border-color: #e41d36; }
+.platform-btn-goibibo:hover { border-color: #f26722; }
+.platform-btn-booking_com:hover { border-color: #003580; }
+.platform-btn-agoda:hover { border-color: #5392f9; }
+.platform-btn-oyo:hover { border-color: #ee2e24; }
+
+/* Disclaimers inside card */
+.card-discovery-disclaimers {
+    padding-top: 8px;
+    border-top: 1px solid var(--neutral-200);
 }
 
-.card-action-btn {
-    width: 100%;
-    text-align: center;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
-    color: var(--white);
-    border: 1px solid var(--primary-600);
-    border-radius: var(--radius-md);
-    padding: 10px 16px;
-    font-weight: 700;
-    font-size: 0.88rem;
-    text-decoration: none;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 6px rgba(29, 78, 216, 0.2);
+.card-disclaimer-item {
+    font-size: 0.72rem;
+    color: var(--neutral-500);
+    line-height: 1.38;
+    margin: 0 0 3px 0;
 }
 
-.card-action-btn:hover {
-    background: linear-gradient(135deg, var(--primary-700), var(--primary-800));
-    color: var(--white);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(29, 78, 216, 0.35);
+.card-disclaimer-item:last-child {
+    margin-bottom: 0;
 }
 
 /* ==========================================================================

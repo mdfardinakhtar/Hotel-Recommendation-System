@@ -234,6 +234,15 @@ BOOKING_PLATFORMS = [
         "bg_color": "#5392f9",
         "search_url_template": "https://www.agoda.com/search?text={query}",
         "description": "Find competitive accommodation tariffs and traveler review ratings on Agoda."
+    },
+    {
+        "id": "oyo",
+        "name": "OYO",
+        "badge": "Budget & Value",
+        "logo_text": "OYO",
+        "bg_color": "#ee2e24",
+        "search_url_template": "https://www.oyorooms.com/search?location={query}",
+        "description": "Find verified budget stays, sanitized rooms, and direct booking benefits on OYO."
     }
 ]
 
