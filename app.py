@@ -1,3 +1,4 @@
+import os
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
 import pandas as pd
 import numpy as np
@@ -59,67 +60,38 @@ hotel_data = hotel_data.merge(price_meta, on="Hotel_ID", how="left")
 # --------------------------------------------------
 # Hotel Address In-Memory Lookup (Hotel_ID -> Address)
 # --------------------------------------------------
-def format_address_for_display(address, city, location=None):
+def clean_address_duplication(address_str, city_name):
     """
-    Format address for display by removing ONLY the duplicate city portion.
-    Preserves all building numbers, streets, localities, landmarks, states, and PIN codes.
-    If the city is not present as a separate component or is part of a landmark
-    (e.g., 'Near Chennai International Airport'), it is safely preserved.
+    Ensure the city name is not repeated unnecessarily inside the address string.
+    e.g., 'Near ISKCON temple Bangalore, Bangalore, Karnataka' -> 'Near ISKCON temple Bangalore, Karnataka'
+    Preserves all building numbers, streets, localities, landmarks, city, state, and PIN codes.
+    """
+    c = str(city_name).strip() if city_name else ""
+    if not c or not address_str:
+        return address_str
+    if " (Transit)" in c:
+        c = c.replace(" (Transit)", "").strip()
+    c_esc = re.escape(c)
+    pattern = re.compile(r'(\b' + c_esc + r'\b.*?),\s*' + c_esc + r'\b', re.IGNORECASE)
+    cleaned = pattern.sub(r'\1', address_str)
+    pattern_consec = re.compile(r'\b(' + c_esc + r')(?:\s*,\s*\1\b)+', re.IGNORECASE)
+    cleaned = pattern_consec.sub(r'\1', cleaned)
+    cleaned = re.sub(r',\s*,+', ',', cleaned)
+    cleaned = re.sub(r',\s*', ', ', cleaned)
+    cleaned = re.sub(r'^\s*,\s*', '', cleaned)
+    cleaned = re.sub(r'\s*,\s*$', '', cleaned).strip()
+    return cleaned or address_str
+
+
+def format_address_for_display(address, city=None, location=None):
+    """
+    Format address for display ensuring no unnecessary duplicate city occurrences.
+    Preserves all building numbers, streets, localities, landmarks, city, state, and PIN codes.
     """
     if not address or address == "Address not available":
-        return address
-
-    city_variants = []
-    if city:
-        c_clean = str(city).strip()
-        if c_clean and c_clean not in city_variants:
-            city_variants.append(c_clean)
-        if " (Transit)" in c_clean:
-            sub = c_clean.replace(" (Transit)", "").strip()
-            if sub and sub not in city_variants:
-                city_variants.append(sub)
-    if location:
-        loc_str = str(location).strip()
-        if loc_str and loc_str not in city_variants:
-            city_variants.append(loc_str)
-        loc_clean = loc_str.replace("_", " ").strip()
-        if loc_clean and loc_clean not in city_variants:
-            city_variants.append(loc_clean)
-        if loc_str == "Delhi_Transit" and "Delhi" not in city_variants:
-            city_variants.append("Delhi")
-
-    # Sort variants longest first to avoid partial replacements
-    city_variants.sort(key=len, reverse=True)
-
-    formatted = address
-    for variant in city_variants:
-        if not variant:
-            continue
-        v_esc = re.escape(variant)
-
-        # 1. Comma-separated in middle: ', City,' or ', City ,' -> ','
-        pattern_middle = re.compile(r',\s*' + v_esc + r'\s*,', re.IGNORECASE)
-        formatted = pattern_middle.sub(',', formatted)
-
-        # 2. Comma-separated at end: ', City' -> ''
-        pattern_end = re.compile(r',\s*' + v_esc + r'\s*$', re.IGNORECASE)
-        formatted = pattern_end.sub('', formatted)
-
-        # 3. Comma-separated at start: '^City,' -> ''
-        pattern_start = re.compile(r'^\s*' + v_esc + r'\s*,\s*', re.IGNORECASE)
-        formatted = pattern_start.sub('', formatted)
-
-        # 4. Standalone in parentheses: '(City)' -> ''
-        pattern_paren = re.compile(r'\s*\(\s*' + v_esc + r'\s*\)', re.IGNORECASE)
-        formatted = pattern_paren.sub('', formatted)
-
-    # Clean up commas and spaces
-    formatted = re.sub(r',\s*,+', ',', formatted)
-    formatted = re.sub(r',\s*', ', ', formatted)
-    formatted = re.sub(r'^\s*,\s*', '', formatted)
-    formatted = re.sub(r'\s*,\s*$', '', formatted).strip()
-
-    return formatted if formatted else "Address not available"
+        return address or "Address not available"
+    city_name = city or (str(location).replace("_", " ") if location else "")
+    return clean_address_duplication(address, city_name)
 
 
 # --------------------------------------------------
@@ -359,15 +331,32 @@ def build_hotel_display_and_address_lookup(df):
     Build in-memory lookup from Hotel_ID -> {
         'name': pure hotel name only (without landmark/address appended),
         'raw_address': complete address including landmark, city, and state,
-        'address': display address with duplicate city removed,
+        'address': display address without unnecessary duplicate city repetitions,
         'city': human-readable city name
     }
     Uses Hotel_ID as the primary key for matching hotel information.
-    Separates hotel name and address into strictly separate fields:
-    - Hotel Name contains ONLY the hotel name.
-    - Hotel Address contains ONLY the address/landmark without duplicate city.
-    - City / Location is kept separate.
+    Loads from data/hotel_metadata_with_address.csv when available.
     """
+    metadata_file = "data/hotel_metadata_with_address.csv"
+    if os.path.exists(metadata_file):
+        meta_df = pd.read_csv(metadata_file)
+        lookup = {}
+        for _, row in meta_df.iterrows():
+            hid = int(row["Hotel_ID"])
+            addr = str(row["Address"]).strip() if pd.notna(row["Address"]) else ""
+            city = str(row["City"]).strip() if pd.notna(row["City"]) else ""
+            clean_addr = clean_address_duplication(addr, city)
+            lookup[hid] = {
+                "name": str(row["Hotel_Name"]).strip(),
+                "raw_name": str(row["Raw_Hotel_Name"]).strip(),
+                "raw_address": addr,
+                "address": clean_addr if clean_addr else "Address not available",
+                "city": city,
+                "state": str(row["State"]).strip() if pd.notna(row["State"]) else "",
+                "landmark": str(row["Landmark"]).strip() if pd.notna(row["Landmark"]) else ""
+            }
+        return lookup
+
     lookup = {}
     for _, row in df.iterrows():
         hid = int(row["Hotel_ID"])
@@ -379,6 +368,7 @@ def build_hotel_display_and_address_lookup(df):
 
         lookup[hid] = {
             "name": pure_name,
+            "raw_name": raw_name,
             "raw_address": raw_address,
             "address": display_address,
             "city": city_display

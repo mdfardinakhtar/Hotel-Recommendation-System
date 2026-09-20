@@ -39,11 +39,10 @@ def run_tests():
     assert h1["location"] == "Bangalore", "Expected location='Bangalore'"
     assert len(h1["address"]) > 0, "Address should not be empty"
 
-    # Verify pure hotel name and address without duplicate city
+    # Verify pure hotel name and full address
     assert h1["name"] == "OYO Hotel Subha Residency", f"Expected pure name 'OYO Hotel Subha Residency', got '{h1['name']}'"
     assert "Near Cubbon Park" not in h1["name"], "Landmark should not be in hotel name"
-    assert h1["address"] == "Near Cubbon Park, Karnataka", f"Expected 'Near Cubbon Park, Karnataka', got '{h1['address']}'"
-    assert "Bangalore" not in h1["address"], "City should not be duplicated in displayed address"
+    assert h1["address"] == "Near Cubbon Park, Bangalore, Karnataka", f"Expected 'Near Cubbon Park, Bangalore, Karnataka', got '{h1['address']}'"
     assert h1.get("raw_address") == "Near Cubbon Park, Bangalore, Karnataka", "Raw address should preserve city"
 
     # 2. Test /recommend with Jaipur query
@@ -66,8 +65,7 @@ def run_tests():
     assert "address" in h2
     assert h2["location"] == "Jaipur"
     assert h2["name"] == "Super OYO Hotel Tourist Residency"
-    assert h2["address"] == "Rajasthan", f"Expected 'Rajasthan', got '{h2['address']}'"
-    assert "Jaipur" not in h2["address"], "City should not be duplicated in displayed address"
+    assert h2["address"] == "Jaipur, Rajasthan", f"Expected 'Jaipur, Rajasthan', got '{h2['address']}'"
     assert h2.get("raw_address") == "Jaipur, Rajasthan"
 
     # 3. Test /recommend with Delhi query
@@ -90,8 +88,7 @@ def run_tests():
     assert "address" in h3
     assert h3["location"] == "Delhi_Transit"
     assert h3["name"] == "OYO Hotel Cozy Cave"
-    assert h3["address"] == "Near IGI Airport, Mahipalpur", f"Expected 'Near IGI Airport, Mahipalpur', got '{h3['address']}'"
-    assert "Delhi" not in h3["address"], "City should not be duplicated in displayed address"
+    assert h3["address"] == "Near IGI Airport, Mahipalpur, Delhi", f"Expected 'Near IGI Airport, Mahipalpur, Delhi', got '{h3['address']}'"
     assert h3.get("raw_address") == "Near IGI Airport, Mahipalpur, Delhi"
 
     # 4. Test /recommend with Mumbai query
@@ -114,8 +111,7 @@ def run_tests():
     assert "address" in h4
     assert h4["location"] == "Mumbai"
     assert h4["name"] == "Super OYO Townhouse OAK Hotel Devanshi Inn"
-    assert h4["address"] == "Maharashtra", f"Expected 'Maharashtra', got '{h4['address']}'"
-    assert "Mumbai" not in h4["address"], "City should not be duplicated in displayed address"
+    assert h4["address"] == "Mumbai, Maharashtra", f"Expected 'Mumbai, Maharashtra', got '{h4['address']}'"
     assert h4.get("raw_address") == "Mumbai, Maharashtra"
 
     # 5. Test /recommend with Hyderabad query
@@ -139,11 +135,10 @@ def run_tests():
     assert h5["location"] == "Hyderabad"
     assert h5["name"] == "Super OYO Capital O Hotel Sai Balaji"
     assert "Near Golconda Fort" not in h5["name"], "Landmark should not be in hotel name"
-    assert h5["address"] == "Near Golconda Fort, Telangana", f"Expected 'Near Golconda Fort, Telangana', got '{h5['address']}'"
-    assert "Hyderabad" not in h5["address"], "City should not be duplicated in displayed address"
+    assert h5["address"] == "Near Golconda Fort, Hyderabad, Telangana", f"Expected 'Near Golconda Fort, Hyderabad, Telangana', got '{h5['address']}'"
     assert h5.get("raw_address") == "Near Golconda Fort, Hyderabad, Telangana", "Raw address should preserve city"
 
-    # 6. Verify Hotel Details page (/hotel/<hotel_id>) shows displayed address without duplicate city
+    # 6. Verify Hotel Details page (/hotel/<hotel_id>) shows full displayed address
     print("\n--- Testing Hotel Details Pages Consistency ---")
     for h in [h1, h2, h3, h4, h5]:
         det_resp = requests.get(f"{BASE_URL}/hotel/{h['hotel_id']}")
@@ -154,9 +149,6 @@ def run_tests():
         assert f'<h1 class="hero-hotel-title">{h["name"]}</h1>' in html, f"Pure name '{h['name']}' not in hero-hotel-title"
         # Check that the displayed address string appears in the HTML
         assert f'<span class="addr-text">{h["address"]}</span>' in html, f"Displayed address '{h['address']}' not found in details page for hotel #{h['hotel_id']}"
-        # Check that duplicate city is NOT inside addr-text
-        if h["address"] != "Address not available" and h.get("city"):
-            assert f'<span class="addr-text">{h["address"]}, {h["city"]}</span>' not in html, f"City should not be duplicated inside addr-text for hotel #{h['hotel_id']}"
         print(f"  [PASS] Hotel #{h['hotel_id']}: Pure Name '{h['name']}' and Address '{h['address']}' verified in details page")
 
     # 7. Unit tests for format_address_for_display logic
@@ -164,12 +156,17 @@ def run_tests():
     from app import format_address_for_display
     prompt_example = "123 MG Road, Near City Mall, Ashok Nagar, Jaipur, Rajasthan 302001"
     formatted_prompt = format_address_for_display(prompt_example, "Jaipur", "Jaipur")
-    assert formatted_prompt == "123 MG Road, Near City Mall, Ashok Nagar, Rajasthan 302001", f"Failed prompt example: {formatted_prompt}"
+    assert formatted_prompt == "123 MG Road, Near City Mall, Ashok Nagar, Jaipur, Rajasthan 302001", f"Failed prompt example: {formatted_prompt}"
     print(f"  [PASS] User Example: '{prompt_example}' -> '{formatted_prompt}'")
+
+    duplicate_example = "Near ISKCON temple Bangalore, Bangalore, Karnataka"
+    formatted_duplicate = format_address_for_display(duplicate_example, "Bangalore", "Bangalore")
+    assert formatted_duplicate == "Near ISKCON temple Bangalore, Karnataka", f"Failed duplicate example: {formatted_duplicate}"
+    print(f"  [PASS] City Duplication Removal: '{duplicate_example}' -> '{formatted_duplicate}'")
 
     state_pin_example = "45 Residency Road, Near Metro, Bangalore, Karnataka 560025"
     formatted_state = format_address_for_display(state_pin_example, "Bangalore", "Bangalore")
-    assert formatted_state == "45 Residency Road, Near Metro, Karnataka 56025" or "Karnataka 560025" in formatted_state
+    assert formatted_state == "45 Residency Road, Near Metro, Bangalore, Karnataka 560025", f"Failed state pin: {formatted_state}"
     print(f"  [PASS] State & PIN preservation: '{state_pin_example}' -> '{formatted_state}'")
 
     proper_noun_example = "Near Chennai International Airport"
@@ -178,7 +175,7 @@ def run_tests():
     print(f"  [PASS] Landmark preservation: '{proper_noun_example}' -> '{formatted_airport}'")
 
     print("\n==================================================")
-    print("ALL CITY DUPLICATE REMOVAL TESTS PASSED!")
+    print("ALL HOTEL ADDRESS AND INTEGRITY TESTS PASSED!")
     print("==================================================")
 
 if __name__ == "__main__":

@@ -559,38 +559,24 @@ function toggleWhyAccordion(index) {
 
 function formatAddressForDisplay(address, city, location) {
     if (!address || address === "Address not available") return address || "Address not available";
-    const cityVariants = [];
-    if (city) {
-        const cClean = String(city).trim();
-        if (cClean && !cityVariants.includes(cClean)) cityVariants.push(cClean);
-        if (cClean.includes(" (Transit)")) {
-            const sub = cClean.replace(" (Transit)", "").trim();
-            if (sub && !cityVariants.includes(sub)) cityVariants.push(sub);
-        }
+    let cityName = city || (location ? (location === 'Delhi_Transit' ? 'Delhi' : String(location).replace(/_/g, ' ')) : "");
+    if (cityName && cityName.includes(" (Transit)")) {
+        cityName = cityName.replace(" (Transit)", "").trim();
     }
-    if (location) {
-        const locStr = String(location).trim();
-        if (locStr && !cityVariants.includes(locStr)) cityVariants.push(locStr);
-        const locClean = locStr.replace(/_/g, " ").trim();
-        if (locClean && !cityVariants.includes(locClean)) cityVariants.push(locClean);
-        if (locStr === "Delhi_Transit" && !cityVariants.includes("Delhi")) cityVariants.push("Delhi");
-    }
-    cityVariants.sort((a, b) => b.length - a.length);
+    if (!cityName) return address;
 
-    let formatted = address;
-    for (const v of cityVariants) {
-        if (!v) continue;
-        const esc = v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        formatted = formatted.replace(new RegExp(`,\\s*${esc}\\s*,`, 'gi'), ',');
-        formatted = formatted.replace(new RegExp(`,\\s*${esc}\\s*$`, 'gi'), '');
-        formatted = formatted.replace(new RegExp(`^\\s*${esc}\\s*,\\s*`, 'gi'), '');
-        formatted = formatted.replace(new RegExp(`\\s*\\(\\s*${esc}\\s*\\)`, 'gi'), '');
-    }
-    formatted = formatted.replace(/,\s*,+/g, ',');
-    formatted = formatted.replace(/,\s*/g, ', ');
-    formatted = formatted.replace(/^\s*,\s*/g, '');
-    formatted = formatted.replace(/\s*,\s*$/g, '').trim();
-    return formatted || "Address not available";
+    const esc = cityName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    // Clean internal duplicate city: e.g. 'Near ISKCON temple Bangalore, Bangalore, Karnataka' -> 'Near ISKCON temple Bangalore, Karnataka'
+    let cleaned = address.replace(new RegExp(`(\\b${esc}\\b.*?),\\s*${esc}\\b`, 'gi'), '$1');
+    // Clean consecutive repeated city: 'Bangalore, Bangalore' -> 'Bangalore'
+    cleaned = cleaned.replace(new RegExp(`\\b(${esc})(?:\\s*,\\s*\\1\\b)+`, 'gi'), '$1');
+    // Clean double commas and whitespace
+    cleaned = cleaned.replace(/,\s*,+/g, ',');
+    cleaned = cleaned.replace(/,\s*/g, ', ');
+    cleaned = cleaned.replace(/^\s*,\s*/g, '');
+    cleaned = cleaned.replace(/\s*,\s*$/g, '').trim();
+
+    return cleaned || address;
 }
 
 function renderHotelCards(hotels) {
